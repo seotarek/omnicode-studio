@@ -29,15 +29,23 @@ export {
   encodeVCard,
   encodeWhatsApp,
   encodeEmail,
-  encodeCrypto
+  encodeCrypto,
+  encodeGs1DigitalLink,
+  encodeEpcSepa,
+  encodeZatcaInvoice,
+  decodeZatcaInvoice
 } from "./payloads/encoders.js";
 export type {
   WifiPayload,
   VCardPayload,
   WhatsAppPayload,
   EmailPayload,
-  CryptoPayload
+  CryptoPayload,
+  GS1DigitalLinkPayload,
+  EpcSepaPayload,
+  ZatcaInvoicePayload
 } from "./payloads/types.js";
+
 
 // Scannability & Validation
 export {
@@ -57,4 +65,10 @@ export {
   type BatchItem,
   type BatchResult
 } from "./engine.js";
+
+// Export Utilities
+export {
+  svgToEps,
+  type EpsExportOptions
+} from "./export/eps.js";
 

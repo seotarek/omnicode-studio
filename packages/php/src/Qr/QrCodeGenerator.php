@@ -815,7 +815,7 @@ class QrCodeGenerator
         $data = $options['data'] ?? 'https://omnicode.studio';
         $ecLevel = $options['ecLevel'] ?? 'M';
 
-        $targetSize = (int)($options['size'] ?? 360);
+        $targetSize = (int)($options['size'] ?? $options['width'] ?? 360);
         if ($targetSize < 30 || $targetSize > 4000) {
             throw new InvalidArgumentException("QR size must be between 30 and 4000 pixels.");
         }

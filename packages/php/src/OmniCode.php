@@ -75,7 +75,7 @@ class OmniCode
                 'codabar'
             ],
             'qrErrorLevels' => ['L', 'M', 'Q', 'H'],
-            'formats' => ['svg', 'base64', 'data-url']
+            'formats' => ['svg', 'base64', 'data-url', 'eps']
         ];
     }
 
@@ -141,5 +141,10 @@ class OmniCode
     public static function toDataUrl(string $svg, string $mimeType = 'image/svg+xml'): string
     {
         return 'data:' . $mimeType . ';base64,' . base64_encode($svg);
+    }
+
+    public static function toEps(string $svg, array $options = []): string
+    {
+        return \Omnicode\Export\EpsExporter::fromSvg($svg, $options);
     }
 }

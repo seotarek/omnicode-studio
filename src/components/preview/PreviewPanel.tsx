@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import DOMPurify from "dompurify";
 import { Download, Copy, Check } from "lucide-react";
 import { ValidationResult } from "../../core/validator/scannability";
-import { exportSVG, exportRaster, exportPDF } from "../../core/export";
+import { exportSVG, exportRaster, exportPDF, exportEPS } from "../../core/export";
 import { ScannabilityBadge } from "./ScannabilityBadge";
 import { Translations } from "../../i18n/translations";
 
@@ -118,8 +118,17 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
           Print PDF
         </button>
         <button
-          onClick={onCopySvg}
+          onClick={() => {
+            exportEPS(targetSvg, "omnicode.eps");
+          }}
           className="py-2.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+        >
+          <Download className="w-3.5 h-3.5" />
+          EPS Vector
+        </button>
+        <button
+          onClick={onCopySvg}
+          className="col-span-2 py-2.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
         >
           {copied ? (
             <Check className="w-3.5 h-3.5 text-emerald-600" />

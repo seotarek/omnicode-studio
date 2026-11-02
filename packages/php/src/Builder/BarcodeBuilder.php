@@ -132,4 +132,9 @@ class BarcodeBuilder
     {
         return 'data:' . $mimeType . ';base64,' . $this->toBase64();
     }
+
+    public function toEps(array $options = []): string
+    {
+        return \Omnicode\Export\EpsExporter::fromSvg($this->generate(), $options);
+    }
 }

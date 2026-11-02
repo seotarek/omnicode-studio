@@ -201,7 +201,7 @@
                 "type": "object",
                 "properties": {
                   "type": { "type": "string", "enum": ["qr", "barcode"] },
-                  "outputFormat": { "type": "string", "enum": ["svg", "base64", "data-url"], "default": "svg" },
+                  "outputFormat": { "type": "string", "enum": ["svg", "base64", "data-url", "eps"], "default": "svg" },
                   "options": { "type": "object" }
                 },
                 "required": ["type", "options"]
@@ -211,6 +211,54 @@
         },
         "responses": {
           "200": { "description": "Exported code result" }
+        }
+      }
+    },
+    "/api/v1/payloads/encode": {
+      "post": {
+        "summary": "Encode Enterprise Standards Payload",
+        "description": "Encodes GS1 Digital Link (Sunrise 2027), EPC SEPA QR, or Saudi Arabia ZATCA E-Invoicing (Fatoora) TLV payloads.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "enum": ["gs1", "epc-sepa", "zatca", "wifi", "vcard", "whatsapp", "email", "crypto"] },
+                  "payload": { "type": "object" }
+                },
+                "required": ["type", "payload"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Encoded payload string and recommended Error Correction Level" }
+        }
+      }
+    },
+    "/api/v1/payloads/decode": {
+      "post": {
+        "summary": "Decode Enterprise Binary Payload",
+        "description": "Decodes binary/Base64 payloads like ZATCA TLV e-invoicing data.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "enum": ["zatca"] },
+                  "data": { "type": "string" }
+                },
+                "required": ["type", "data"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Decoded payload dictionary and human-readable fields" }
         }
       }
     },

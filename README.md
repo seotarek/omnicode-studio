@@ -1,10 +1,12 @@
 # OmniCode Studio: Global Multi-Tier Code Generation Ecosystem
 
+[![Latest Release](https://img.shields.io/badge/Release-v1.1.0-059669.svg)](https://github.com/seotarek/omnicode-studio/releases)
+[![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-GHCR%20%2B%20NPM-2563eb.svg)](https://github.com/users/seotarek/packages?repo_name=omnicode-studio)
 [![CI & CD Pipeline](https://github.com/seotarek/omnicode-studio/actions/workflows/deploy.yml/badge.svg)](https://github.com/seotarek/omnicode-studio/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-059669.svg)](https://opensource.org/licenses/MIT)
-[![Core Tests](https://img.shields.io/badge/Core%20Tests-34%20Passing-0284c7.svg)](tests/)
-[![API Tests](https://img.shields.io/badge/API%20Tests-31%20Passing-10b981.svg)](packages/api/tests/)
-[![PHP Tests](https://img.shields.io/badge/PHP%20Tests-35%20Passing%20(495%20Assertions)-777bb4.svg)](packages/php/tests/)
+[![Core Tests](https://img.shields.io/badge/Core%20Tests-42%20Passing-0284c7.svg)](tests/)
+[![API Tests](https://img.shields.io/badge/API%20Tests-32%20Passing-10b981.svg)](packages/api/tests/)
+[![PHP Tests](https://img.shields.io/badge/PHP%20Tests-43%20Passing%20(535%20Assertions)-777bb4.svg)](packages/php/tests/)
 [![Laravel Tests](https://img.shields.io/badge/Laravel%20Tests-11%20Passing%20(45%20Assertions)-ff2d20.svg)](packages/laravel/tests/)
 [![Security: Hardened](https://img.shields.io/badge/Security-Hardened%20(OWASP%20%2B%20SSRF%20%2B%20Auth)-059669.svg)](#security-and-privacy)
 

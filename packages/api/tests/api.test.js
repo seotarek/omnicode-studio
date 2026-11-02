@@ -396,6 +396,82 @@ describe("OmniCode REST API Integration Suite", () => {
       expect(dataUrlRes.status).toBe(200);
       expect(dataUrlRes.body.outputFormat).toBe("data-url");
       expect(dataUrlRes.body.dataUrl.startsWith("data:image/svg+xml;base64,")).toBe(true);
+
+      const epsRes = await request(app)
+        .post("/api/v1/export")
+        .send({
+          type: "barcode",
+          outputFormat: "eps",
+          options: { format: "CODE128", data: "EXPORT-EPS" }
+        });
+
+      expect(epsRes.status).toBe(200);
+      expect(epsRes.body.outputFormat).toBe("eps");
+      expect(epsRes.body.eps).toContain("%!PS-Adobe-3.0 EPSF-3.0");
+      expect(epsRes.body.eps).toContain("%%EOF");
+    });
+
+    it("POST /api/v1/payloads/encode encodes GS1, EPC SEPA, and ZATCA payloads", async () => {
+      // 1. GS1 Digital Link
+      const gs1Res = await request(app)
+        .post("/api/v1/payloads/encode")
+        .send({
+          type: "gs1",
+          payload: {
+            domain: "https://id.gs1.org",
+            gtin: "01234567890128",
+            lot: "BATCH-A1",
+            serial: "SER-99"
+          }
+        });
+      expect(gs1Res.status).toBe(200);
+      expect(gs1Res.body.encoded).toBe("https://id.gs1.org/01/01234567890128/10/BATCH-A1/21/SER-99");
+      expect(gs1Res.body.recommendedEcLevel).toBe("M");
+
+      // 2. EPC SEPA
+      const epcRes = await request(app)
+        .post("/api/v1/payloads/encode")
+        .send({
+          type: "epc-sepa",
+          payload: {
+            name: "OmniCode GmbH",
+            iban: "DE89370400440532013000",
+            amount: 49.99,
+            remittanceText: "Invoice 1002"
+          }
+        });
+      expect(epcRes.status).toBe(200);
+      expect(epcRes.body.encoded).toContain("BCD\n002\n1\nSCT");
+      expect(epcRes.body.encoded).toContain("OmniCode GmbH");
+
+      // 3. ZATCA
+      const zatcaRes = await request(app)
+        .post("/api/v1/payloads/encode")
+        .send({
+          type: "zatca",
+          payload: {
+            sellerName: "شركة أومني كود المحدودة",
+            vatNumber: "300000000000003",
+            timestamp: "2026-11-02T18:00:00Z",
+            totalWithVat: "115.00",
+            vatTotal: "15.00"
+          }
+        });
+      expect(zatcaRes.status).toBe(200);
+      expect(zatcaRes.body.recommendedEcLevel).toBe("H");
+      expect(zatcaRes.body.encoded.length).toBeGreaterThan(20);
+
+      // 4. Decode ZATCA
+      const decodeRes = await request(app)
+        .post("/api/v1/payloads/decode")
+        .send({
+          type: "zatca",
+          data: zatcaRes.body.encoded
+        });
+      expect(decodeRes.status).toBe(200);
+      expect(decodeRes.body.decoded.sellerName).toBe("شركة أومني كود المحدودة");
+      expect(decodeRes.body.decoded.vatNumber).toBe("300000000000003");
+      expect(decodeRes.body.decoded.totalWithVat).toBe("115.00");
     });
   });
 });

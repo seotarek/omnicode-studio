@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@omnicode/core": "file:../core",
+    "@seotarek/omnicode-core": "file:../core",
     "cors": "^2.8.5",
     "express": "^4.21.2"
   },

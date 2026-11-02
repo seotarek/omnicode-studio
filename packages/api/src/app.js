@@ -13,7 +13,17 @@ import {
   calculateMod10CheckDigit,
   validateScannability,
   calculateContrast,
-  OmniCode
+  OmniCode,
+  encodeGs1DigitalLink,
+  encodeEpcSepa,
+  encodeZatcaInvoice,
+  decodeZatcaInvoice,
+  encodeWifi,
+  encodeVCard,
+  encodeWhatsApp,
+  encodeEmail,
+  encodeCrypto,
+  svgToEps
 } from "../../core/dist/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -506,6 +516,24 @@ app.post("/api/v1/export", (req, res) => {
       });
     }
 
+    if (outputFormat === "eps") {
+      const eps = svgToEps(svg, {
+        title: options.title || "OmniCode Vector Barcode/QR",
+        barWidthReduction: options.barWidthReduction || 0
+      });
+      const acceptHeader = req.headers.accept || "";
+      if (acceptHeader.includes("application/postscript")) {
+        res.setHeader("Content-Type", "application/postscript");
+        return res.send(eps);
+      }
+      return res.json({
+        success: true,
+        type,
+        outputFormat: "eps",
+        eps
+      });
+    }
+
     const acceptHeader = req.headers.accept || "";
     if (acceptHeader.includes("image/svg+xml")) {
       res.setHeader("Content-Type", "image/svg+xml");
@@ -517,6 +545,98 @@ app.post("/api/v1/export", (req, res) => {
       type,
       outputFormat: "svg",
       svg
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Enterprise Standards & Payloads Encoding Endpoint
+app.post("/api/v1/payloads/encode", (req, res) => {
+  try {
+    const { type, payload } = req.body;
+    if (!type || !payload) {
+      return res.status(400).json({
+        success: false,
+        error: "'type' and 'payload' object are required"
+      });
+    }
+
+    let encoded = "";
+    let recommendedEcLevel = "M";
+
+    switch (type.toLowerCase()) {
+      case "gs1":
+      case "gs1-digital-link":
+        encoded = encodeGs1DigitalLink(payload);
+        recommendedEcLevel = "M";
+        break;
+      case "epc":
+      case "epc-sepa":
+        encoded = encodeEpcSepa(payload);
+        recommendedEcLevel = "M";
+        break;
+      case "zatca":
+      case "zatca-invoice":
+        encoded = encodeZatcaInvoice(payload);
+        recommendedEcLevel = "H";
+        break;
+      case "wifi":
+        encoded = encodeWifi(payload);
+        break;
+      case "vcard":
+        encoded = encodeVCard(payload);
+        break;
+      case "whatsapp":
+        encoded = encodeWhatsApp(payload);
+        break;
+      case "email":
+        encoded = encodeEmail(payload);
+        break;
+      case "crypto":
+        encoded = encodeCrypto(payload);
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          error: `Unsupported payload type: '${type}'. Supported types: gs1, epc-sepa, zatca, wifi, vcard, whatsapp, email, crypto`
+        });
+    }
+
+    res.json({
+      success: true,
+      type,
+      encoded,
+      recommendedEcLevel
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// ZATCA TLV Invoice Decoding Endpoint
+app.post("/api/v1/payloads/decode", (req, res) => {
+  try {
+    const { type, data } = req.body;
+    if (!type || !data) {
+      return res.status(400).json({
+        success: false,
+        error: "'type' and 'data' string are required"
+      });
+    }
+
+    if (type.toLowerCase() === "zatca") {
+      const decoded = decodeZatcaInvoice(data);
+      return res.json({
+        success: true,
+        type: "zatca",
+        decoded
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      error: `Unsupported decode type '${type}'. Supported: zatca`
     });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

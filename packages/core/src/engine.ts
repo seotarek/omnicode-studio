@@ -15,6 +15,7 @@ import {
   type ValidationResult
 } from "./validator/scannability.js";
 import { DESIGN_PRESETS } from "./presets.js";
+import { svgToEps, type EpsExportOptions } from "./export/eps.js";
 
 export interface OmniCodePlugin {
   name: string;
@@ -237,5 +238,12 @@ export class OmniCode {
   public static toDataUrl(svg: string, mimeType = "image/svg+xml"): string {
     const base64 = this.toBase64(svg);
     return `data:${mimeType};base64,${base64}`;
+  }
+
+  /**
+   * Convert SVG string to Encapsulated PostScript (EPS) vector format.
+   */
+  public static toEps(svg: string, options?: EpsExportOptions): string {
+    return svgToEps(svg, options);
   }
 }

@@ -127,3 +127,11 @@ export async function exportPDF(svgString: string, filename = "omnicode.pdf") {
   pdf.addImage(imgData, "PNG", 10, topPad, renderW, renderH);
   pdf.save(filename);
 }
+
+import { svgToEps, EpsExportOptions } from "./export/eps";
+
+export function exportEPS(svgString: string, filename = "omnicode.eps", options: EpsExportOptions = {}) {
+  const epsContent = svgToEps(svgString, options);
+  const blob = new Blob([epsContent], { type: "application/postscript;charset=utf-8" });
+  downloadBlob(blob, filename);
+}
