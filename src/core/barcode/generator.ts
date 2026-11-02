@@ -144,6 +144,12 @@ export function validateBarcodeData(format: BarcodeFormat, data: string): { isVa
       }
       break;
     }
+    case "MSI": {
+      if (!/^\d+$/.test(data)) {
+        return { isValid: false, error: "MSI must contain only numeric digits" };
+      }
+      break;
+    }
     default:
       break;
   }
@@ -260,8 +266,8 @@ export function generateBarcodeSVG(options: BarcodeOptions): string {
       // Modern badge ticket frame
       frameMarkup =
         "<rect width=\"" + totalW + "\" height=\"" + totalH + "\" fill=\"" + bgFill + "\" stroke=\"" + safeLineColor + "\" stroke-width=\"2\" stroke-dasharray=\"6 4\" rx=\"16\" />" +
-        "<circle cx=\"0\" cy=\"" + (totalH / 2) + "\" r=\"10\" fill=\"#0f172a\" />" +
-        "<circle cx=\"" + totalW + "\" cy=\"" + (totalH / 2) + "\" r=\"10\" fill=\"#0f172a\" />" +
+        "<circle cx=\"0\" cy=\"" + (totalH / 2) + "\" r=\"10\" fill=\"#f8fafc\" stroke=\"" + safeLineColor + "\" stroke-width=\"2\" />" +
+        "<circle cx=\"" + totalW + "\" cy=\"" + (totalH / 2) + "\" r=\"10\" fill=\"#f8fafc\" stroke=\"" + safeLineColor + "\" stroke-width=\"2\" />" +
         "<text x=\"" + (totalW / 2) + "\" y=\"" + (headerH + 6) + "\" font-family=\"sans-serif\" font-size=\"11\" font-weight=\"bold\" fill=\"#64748b\" text-anchor=\"middle\" letter-spacing=\"2\">" + (sanitizedHeader || "OFFICIAL VERIFICATION BADGE") + "</text>";
     }
 

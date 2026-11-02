@@ -104,6 +104,8 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
                 <option value="UPC">UPC-A (North America Consumer Goods)</option>
                 <option value="CODE39">CODE39 (Defense, Automotive, Asset ID)</option>
                 <option value="ITF14">ITF-14 (Master Corrugated Cartons)</option>
+                <option value="MSI">MSI / Plessey (Storage & Warehouse)</option>
+                <option value="codabar">Codabar (Libraries, Blood Banks, Air Waybill)</option>
                 <option value="pharmacode">Pharmacode (Pharmaceutical Verification)</option>
               </select>
             </div>

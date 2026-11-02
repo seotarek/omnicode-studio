@@ -3,9 +3,16 @@
   "version": "1.0.0",
   "description": "Headless enterprise-grade barcode and QR code generation, validation, and encoding engine",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
     "README.md"

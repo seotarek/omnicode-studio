@@ -36,3 +36,22 @@ export interface CalendarPayload {
   startDate: string;
   endDate?: string;
 }
+
+export interface WhatsAppPayload {
+  phone: string;
+  text?: string;
+}
+
+export interface EmailPayload {
+  to: string;
+  subject?: string;
+  body?: string;
+}
+
+export interface CryptoPayload {
+  currency: "BTC" | "ETH" | "USDT" | string;
+  address: string;
+  amount?: number;
+  message?: string;
+}
+

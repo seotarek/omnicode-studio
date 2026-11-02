@@ -66,3 +66,13 @@ export function encodeCalendar(cal: CalendarPayload): string {
   lines.push("END:VEVENT");
   return lines.join("\n");
 }
+
+export function encodeCrypto(payload: { currency: "BTC" | "ETH" | "USDT" | string; address: string; amount?: number; message?: string }): string {
+  const scheme = payload.currency.toLowerCase();
+  const query: string[] = [];
+  if (payload.amount !== undefined) query.push(`amount=${payload.amount}`);
+  if (payload.message) query.push(`message=${encodeURIComponent(payload.message)}`);
+  const qs = query.length > 0 ? `?${query.join("&")}` : "";
+  return `${scheme}:${payload.address}${qs}`;
+}
+
