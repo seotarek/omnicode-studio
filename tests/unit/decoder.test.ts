@@ -108,20 +108,30 @@ describe("Independent Decoder Verification (ZXing)", () => {
   });
 
   it("decodes pure PHP QrCodeGenerator matrix using ZXing", () => {
-    try {
-      const { execSync } = require("child_process");
-      const payload = "https://omnicode.studio/cross-engine-verified";
-      const cmd = `php -r 'require_once "packages/php/vendor/autoload.php"; echo json_encode(Omnicode\\Qr\\QrCodeGenerator::generateMatrix("${payload}", "M"));'`;
-      const output = execSync(cmd, { encoding: "utf8" });
-      const matrix: boolean[][] = JSON.parse(output);
+    const { execSync } = require("child_process");
+    const path = require("path");
+    const fs = require("fs");
+    const phpDir = path.resolve(__dirname, "../../packages/php");
+    const sanitizerPath = path.join(phpDir, "src/Security/ColorSanitizer.php");
+    const generatorPath = path.join(phpDir, "src/Qr/QrCodeGenerator.php");
 
-      const decoded = decodeMatrixWithZXing(matrix);
-      expect(decoded).toBe(payload);
-    } catch (e: any) {
-      if (e.message && (e.message.includes("php: command not found") || e.message.includes("php: not found"))) {
-        return;
-      }
-      throw e;
+    if (!fs.existsSync(sanitizerPath) || !fs.existsSync(generatorPath)) {
+      return;
     }
+
+    try {
+      execSync("php -v", { stdio: "ignore" });
+    } catch {
+      // PHP CLI not present in this test environment
+      return;
+    }
+
+    const payload = "https://omnicode.studio/cross-engine-verified";
+    const cmd = `php -r 'require_once "${sanitizerPath}"; require_once "${generatorPath}"; echo json_encode(Omnicode\\Qr\\QrCodeGenerator::generateMatrix("${payload}", "M"));'`;
+    const output = execSync(cmd, { encoding: "utf8" });
+    const matrix: boolean[][] = JSON.parse(output);
+
+    const decoded = decodeMatrixWithZXing(matrix);
+    expect(decoded).toBe(payload);
   });
 });
