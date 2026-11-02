@@ -24,6 +24,7 @@ export function calculateMod10CheckDigit(digits: string): number {
 }
 
 import JsBarcode from "jsbarcode";
+import { sanitizeColor } from "../security/color.js";
 
 export type BarcodeFormat =
   | "CODE128"
@@ -217,14 +218,18 @@ export function generateBarcodeSVG(options: BarcodeOptions): string {
   const isGradient = style === "gradient";
   const isRounded = style === "rounded" || style === "pill";
 
+  const safeLineColor = sanitizeColor(options.lineColor, "#000000");
+  const safeLineColor2 = sanitizeColor(options.lineColor2, "#2563eb");
+  const safeBg = options.background === "transparent" ? "transparent" : sanitizeColor(options.background, "#ffffff");
+
   // Base JsBarcode generation
   JsBarcode(svgNode, options.data, {
     format: options.format,
     width: options.width || 2,
     height: options.height || 100,
     displayValue: options.displayValue ?? !isMinimal,
-    lineColor: isGradient ? "url(#barcode-grad)" : (options.lineColor || "#000000"),
-    background: isBadge || isPriceTag || isThermal ? "transparent" : (options.background || "#ffffff"),
+    lineColor: isGradient ? "url(#barcode-grad)" : safeLineColor,
+    background: isBadge || isPriceTag || isThermal ? "transparent" : safeBg,
     fontSize: isThermal ? 14 : (options.fontSize || 16),
     font: isThermal ? "Courier New, monospace" : (options.fontFamily || "monospace"),
     margin: isBadge || isPriceTag || isThermal ? 4 : (options.margin || 10)
@@ -251,8 +256,8 @@ export function generateBarcodeSVG(options: BarcodeOptions): string {
     const defs = doc.createElementNS("http://www.w3.org/2000/svg", "defs");
     defs.innerHTML =
       "<linearGradient id=\"barcode-grad\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">" +
-      "<stop offset=\"0%\" stop-color=\"" + (options.lineColor || "#059669") + "\" />" +
-      "<stop offset=\"100%\" stop-color=\"" + (options.lineColor2 || "#2563eb") + "\" />" +
+      "<stop offset=\"0%\" stop-color=\"" + safeLineColor + "\" />" +
+      "<stop offset=\"100%\" stop-color=\"" + safeLineColor2 + "\" />" +
       "</linearGradient>";
     svgNode.insertBefore(defs, svgNode.firstChild);
   }
@@ -274,7 +279,7 @@ export function generateBarcodeSVG(options: BarcodeOptions): string {
     wrapper.setAttribute("width", String(totalW));
     wrapper.setAttribute("height", String(totalH));
 
-    const bgFill = options.background || "#ffffff";
+    const bgFill = safeBg;
     let frameMarkup = "";
 
     if (isThermal) {
@@ -289,14 +294,14 @@ export function generateBarcodeSVG(options: BarcodeOptions): string {
       // Retail store price sticker
       frameMarkup =
         "<rect width=\"" + totalW + "\" height=\"" + totalH + "\" fill=\"" + bgFill + "\" stroke=\"#e2e8f0\" stroke-width=\"2\" rx=\"12\" />" +
-        "<rect x=\"0\" y=\"0\" width=\"" + totalW + "\" height=\"" + (headerH + 12) + "\" fill=\"" + (options.lineColor || "#059669") + "\" rx=\"12\" />" +
-        "<rect x=\"0\" y=\"" + headerH + "\" width=\"" + totalW + "\" height=\"12\" fill=\"" + (options.lineColor || "#059669") + "\" />" +
+        "<rect x=\"0\" y=\"0\" width=\"" + totalW + "\" height=\"" + (headerH + 12) + "\" fill=\"" + safeLineColor + "\" rx=\"12\" />" +
+        "<rect x=\"0\" y=\"" + headerH + "\" width=\"" + totalW + "\" height=\"12\" fill=\"" + safeLineColor + "\" />" +
         "<text x=\"" + (totalW / 2) + "\" y=\"" + (headerH + 2) + "\" font-family=\"sans-serif\" font-weight=\"bold\" font-size=\"13\" fill=\"#ffffff\" text-anchor=\"middle\">" + (sanitizedHeader || "STORE INVENTORY ITEM") + "</text>" +
-        "<text x=\"" + (totalW / 2) + "\" y=\"" + (totalH - 10) + "\" font-family=\"sans-serif\" font-weight=\"bold\" font-size=\"14\" fill=\"" + (options.lineColor || "#059669") + "\" text-anchor=\"middle\">" + (sanitizedFooter || "PRICE: $99.99") + "</text>";
+        "<text x=\"" + (totalW / 2) + "\" y=\"" + (totalH - 10) + "\" font-family=\"sans-serif\" font-weight=\"bold\" font-size=\"14\" fill=\"" + safeLineColor + "\" text-anchor=\"middle\">" + (sanitizedFooter || "PRICE: $99.99") + "</text>";
     } else if (isBadge) {
       // Modern badge ticket frame
       frameMarkup =
-        "<rect width=\"" + totalW + "\" height=\"" + totalH + "\" fill=\"" + bgFill + "\" stroke=\"" + (options.lineColor || "#3b82f6") + "\" stroke-width=\"2\" stroke-dasharray=\"6 4\" rx=\"16\" />" +
+        "<rect width=\"" + totalW + "\" height=\"" + totalH + "\" fill=\"" + bgFill + "\" stroke=\"" + safeLineColor + "\" stroke-width=\"2\" stroke-dasharray=\"6 4\" rx=\"16\" />" +
         "<circle cx=\"0\" cy=\"" + (totalH / 2) + "\" r=\"10\" fill=\"#0f172a\" />" +
         "<circle cx=\"" + totalW + "\" cy=\"" + (totalH / 2) + "\" r=\"10\" fill=\"#0f172a\" />" +
         "<text x=\"" + (totalW / 2) + "\" y=\"" + (headerH + 6) + "\" font-family=\"sans-serif\" font-size=\"11\" font-weight=\"bold\" fill=\"#64748b\" text-anchor=\"middle\" letter-spacing=\"2\">" + (sanitizedHeader || "OFFICIAL VERIFICATION BADGE") + "</text>";

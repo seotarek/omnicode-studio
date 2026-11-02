@@ -49,14 +49,14 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
   t
 }) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Presets & Style Selection */}
-      <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-4">
-        <h3 className="text-sm font-bold flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-emerald-500" />
+      <div className="p-5 rounded-2xl border border-slate-200/90 bg-white shadow-sm space-y-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
           {t.barcodeStyle}
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           {[
             { id: "classic", label: t.barcodeStyleClassic, badge: "Print & POS" },
             { id: "rounded", label: t.barcodeStyleRounded, badge: "Modern" },
@@ -70,10 +70,10 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
             <button
               key={s.id}
               onClick={() => setBarcodeStyle(s.id as BarcodeStyle)}
-              className={`p-2.5 rounded-lg border text-start transition-all ${
+              className={`p-3 rounded-xl border text-start transition-all ${
                 barcodeStyle === s.id
-                  ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
-                  : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-xs"
+                  ? "border-emerald-500 bg-emerald-50/60 text-emerald-800 font-bold shadow-sm"
+                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 bg-slate-50/50 text-xs"
               }`}
             >
               <div className="font-semibold text-xs leading-snug">{s.label}</div>
@@ -84,19 +84,19 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
       </div>
 
       {/* Data & Symbology Standard */}
-      <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-4">
-        <h3 className="text-sm font-bold flex items-center gap-2">
-          <Barcode className="w-4 h-4 text-emerald-500" />
+      <div className="p-5 rounded-2xl border border-slate-200/90 bg-white shadow-sm space-y-4">
+        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <Barcode className="w-4 h-4 text-emerald-600" />
           {t.content}
         </h3>
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="text-xs text-slate-500 block mb-1">{t.barcodeFormat}</label>
+              <label className="text-xs font-medium text-slate-500 block mb-1.5">{t.barcodeFormat}</label>
               <select
                 value={barcodeFormat}
                 onChange={(e) => setBarcodeFormat(e.target.value as BarcodeFormat)}
-                className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs font-bold"
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50/80 text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
               >
                 <option value="CODE128">CODE128 (Universal Logistics)</option>
                 <option value="EAN13">EAN-13 (Standard Retail Packaging)</option>
@@ -109,44 +109,44 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
             </div>
 
             <div>
-              <label className="text-xs text-slate-500 block mb-1">{t.barcodeData}</label>
+              <label className="text-xs font-medium text-slate-500 block mb-1.5">{t.barcodeData}</label>
               <input
                 type="text"
                 value={barcodeData}
                 onChange={(e) => setBarcodeData(e.target.value)}
-                className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 font-mono text-sm"
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50/80 font-mono text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
               />
             </div>
           </div>
 
           {!barcodeValidation.isValid && (
-            <div className="text-xs text-red-500 flex items-center gap-1.5 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-              <ShieldAlert className="w-4 h-4 shrink-0" />
+            <div className="text-xs text-red-700 flex items-center gap-1.5 p-2.5 rounded-xl bg-red-50 border border-red-200">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-red-600" />
               <span>{barcodeValidation.error}</span>
             </div>
           )}
 
           {/* Header / Footer text for frames (Thermal, Price Tag, Badge) */}
           {(barcodeStyle === "thermal-label" || barcodeStyle === "price-tag" || barcodeStyle === "badge-frame") && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-3 border-t border-slate-100">
               <div>
-                <label className="text-xs text-slate-500 block mb-1">{t.headerLabel}</label>
+                <label className="text-xs font-medium text-slate-500 block mb-1.5">{t.headerLabel}</label>
                 <input
                   type="text"
                   value={barcodeHeader}
                   onChange={(e) => setBarcodeHeader(e.target.value)}
                   placeholder="e.g. PRIORITY AIR SHIPMENT #892"
-                  className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs font-medium"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50/80 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-500 block mb-1">{t.footerLabel}</label>
+                <label className="text-xs font-medium text-slate-500 block mb-1.5">{t.footerLabel}</label>
                 <input
                   type="text"
                   value={barcodeFooter}
                   onChange={(e) => setBarcodeFooter(e.target.value)}
                   placeholder="e.g. UNIT PRICE: $49.00 / CARRIER VERIFIED"
-                  className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs font-medium"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50/80 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
                 />
               </div>
             </div>
@@ -155,38 +155,38 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
       </div>
 
       {/* Geometry & Color Engine */}
-      <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-4">
-        <h3 className="text-sm font-bold flex items-center gap-2">
-          <Palette className="w-4 h-4 text-emerald-500" />
+      <div className="p-5 rounded-2xl border border-slate-200/90 bg-white shadow-sm space-y-4">
+        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <Palette className="w-4 h-4 text-emerald-600" />
           {t.colors} & Dimensions
         </h3>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">Bar Color:</label>
+            <label className="text-xs font-medium text-slate-600">Bar Color:</label>
             <input
               type="color"
               value={barcodeColor}
               onChange={(e) => setBarcodeColor(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer bg-transparent border-0"
+              className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border border-slate-300 shadow-sm"
             />
           </div>
           {barcodeStyle === "gradient" && (
             <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500">Gradient Stop 2:</label>
+              <label className="text-xs font-medium text-slate-600">Gradient Stop 2:</label>
               <input
                 type="color"
                 value={barcodeColor2}
                 onChange={(e) => setBarcodeColor2(e.target.value)}
-                className="w-8 h-8 rounded cursor-pointer bg-transparent border-0"
+                className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border border-slate-300 shadow-sm"
               />
             </div>
           )}
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">Bar Density:</label>
+            <label className="text-xs font-medium text-slate-600">Bar Density:</label>
             <select
               value={barcodeWidth}
               onChange={(e) => setBarcodeWidth(Number(e.target.value))}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs font-medium"
+              className="p-2 rounded-xl border border-slate-200 bg-slate-50/80 text-xs font-medium text-slate-800 focus:bg-white outline-none"
             >
               <option value="1">1px (Compact)</option>
               <option value="2">2px (Standard Print)</option>
@@ -195,11 +195,11 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">Height:</label>
+            <label className="text-xs font-medium text-slate-600">Height:</label>
             <select
               value={barcodeHeight}
               onChange={(e) => setBarcodeHeight(Number(e.target.value))}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs font-medium"
+              className="p-2 rounded-xl border border-slate-200 bg-slate-50/80 text-xs font-medium text-slate-800 focus:bg-white outline-none"
             >
               <option value="60">60px (Small)</option>
               <option value="90">90px (Standard)</option>

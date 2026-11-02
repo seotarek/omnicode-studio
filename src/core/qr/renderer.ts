@@ -16,6 +16,7 @@ import {
   CornerDotType,
   ColorOrGradient
 } from "./types";
+import { sanitizeColor } from "../security/color";
 
 export interface RenderResult {
   svgString: string;
@@ -179,7 +180,7 @@ export class QRCodeRenderer {
     if (colorOrGrad.gradient) {
       const g = colorOrGrad.gradient;
       const stops = g.colorStops
-        .map((s) => `<stop offset="${s.offset * 100}%" stop-color="${s.color}" />`)
+        .map((s) => `<stop offset="${s.offset * 100}%" stop-color="${sanitizeColor(s.color, "#000000")}" />`)
         .join("");
 
       if (g.type === "radial") {
@@ -200,7 +201,7 @@ export class QRCodeRenderer {
       }
     }
     return {
-      id: colorOrGrad.color || "#000000",
+      id: sanitizeColor(colorOrGrad.color, "#000000"),
       defString: ""
     };
   }
@@ -271,7 +272,7 @@ export class QRCodeRenderer {
       const logoY = (rawSize - logoSize) / 2;
       const bgPad = (this.options.logoOptions.padding || 1) * cellSize;
       const bgRadius = this.options.logoOptions.borderRadius || 8;
-      const bgColor = this.options.logoOptions.backgroundColor || "#ffffff";
+      const bgColor = sanitizeColor(this.options.logoOptions.backgroundColor, "#ffffff");
 
       // Validate safe image schema
       const safeUrl = this.options.logoOptions.url.trim();
@@ -290,7 +291,7 @@ export class QRCodeRenderer {
     // Background rect
     const bgElement = this.options.backgroundOptions.transparent
       ? ""
-      : `<rect width="${rawSize}" height="${rawSize}" fill="${this.options.backgroundOptions.color}" />`;
+      : `<rect width="${rawSize}" height="${rawSize}" fill="${sanitizeColor(this.options.backgroundOptions.color, "#ffffff")}" />`;
 
     const svgString = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${rawSize} ${rawSize}" width="${rawSize}" height="${rawSize}">

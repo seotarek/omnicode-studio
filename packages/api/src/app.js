@@ -3,6 +3,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isProhibitedUrl, createRateLimiter, apiKeyAuth } from "./security.js";
 
 // Load core engine from @omnicode/core dist
 import {
@@ -19,8 +20,28 @@ const __dirname = path.dirname(__filename);
 
 export const app = express();
 
-app.use(cors());
+// Configurable CORS
+const corsOrigin = process.env.CORS_ORIGIN || "*";
+app.use(
+  cors({
+    origin: corsOrigin === "*" ? "*" : corsOrigin.split(",").map((s) => s.trim()),
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Accept", "x-api-key", "Authorization"]
+  })
+);
+
+// Body parser
 app.use(express.json({ limit: "5mb" }));
+
+// In-memory Rate Limiting (100 req / 15 min default per IP, bypassed for /health and /api/v1/spec)
+const rateLimiter = createRateLimiter({
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: Number(process.env.RATE_LIMIT_MAX) || 100
+});
+app.use(rateLimiter);
+
+// Optional API Key Authentication
+app.use(apiKeyAuth);
 
 // Health Check
 app.get("/health", (req, res) => {
@@ -39,7 +60,7 @@ app.get("/api/v1/spec", (req, res) => {
     const spec = JSON.parse(fs.readFileSync(specPath, "utf-8"));
     res.json(spec);
   } catch (err) {
-    res.status(500).json({ error: "Failed to load OpenAPI specification" });
+    res.status(500).json({ success: false, error: "Failed to load OpenAPI specification" });
   }
 });
 
@@ -60,6 +81,38 @@ app.post("/api/v1/qr/generate", (req, res) => {
       isGradient = false,
       logoUrl
     } = req.body;
+
+    // Bounds checking
+    if (data && typeof data === "string" && data.length > 4096) {
+      return res.status(400).json({
+        success: false,
+        error: "Data payload exceeds maximum allowed length of 4096 characters"
+      });
+    }
+
+    if (size !== undefined && (isNaN(Number(size)) || Number(size) < 30 || Number(size) > 2000)) {
+      return res.status(400).json({
+        success: false,
+        error: "Size must be a number between 30 and 2000"
+      });
+    }
+
+    if (margin !== undefined && (isNaN(Number(margin)) || Number(margin) < 0 || Number(margin) > 200)) {
+      return res.status(400).json({
+        success: false,
+        error: "Margin must be a number between 0 and 200"
+      });
+    }
+
+    // SSRF protection for logoUrl
+    if (logoUrl) {
+      if (isProhibitedUrl(logoUrl)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid or prohibited logo URL: SSRF protection triggered"
+        });
+      }
+    }
 
     const renderer = new QRCodeRenderer({
       width: Number(size),
@@ -147,6 +200,27 @@ app.post("/api/v1/barcode/generate", (req, res) => {
       return res.status(400).json({ success: false, error: "Missing required 'data' field" });
     }
 
+    if (typeof data === "string" && data.length > 4096) {
+      return res.status(400).json({
+        success: false,
+        error: "Data payload exceeds maximum allowed length of 4096 characters"
+      });
+    }
+
+    if (width !== undefined && (isNaN(Number(width)) || Number(width) < 1 || Number(width) > 10)) {
+      return res.status(400).json({
+        success: false,
+        error: "Width must be a number between 1 and 10"
+      });
+    }
+
+    if (height !== undefined && (isNaN(Number(height)) || Number(height) < 10 || Number(height) > 1000)) {
+      return res.status(400).json({
+        success: false,
+        error: "Height must be a number between 10 and 1000"
+      });
+    }
+
     const validation = validateBarcodeData(format, data);
     if (!validation.isValid) {
       return res.status(422).json({ success: false, error: validation.error });
@@ -198,6 +272,13 @@ app.post("/api/v1/verify", (req, res) => {
       logoRatio = 0.2
     } = req.body;
 
+    if (data && typeof data === "string" && data.length > 4096) {
+      return res.status(400).json({
+        success: false,
+        error: "Data payload exceeds maximum allowed length of 4096 characters"
+      });
+    }
+
     const response = {
       success: true,
       type
@@ -238,4 +319,13 @@ app.post("/api/v1/verify", (req, res) => {
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
+});
+
+// Uniform Error Handler (prevents leaking stack traces)
+app.use((err, req, res, _next) => {
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    success: false,
+    error: err.message || "Internal server error"
+  });
 });

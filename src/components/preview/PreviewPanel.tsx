@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useMemo } from "react";
+import DOMPurify from "dompurify";
 import { Download, Copy, Check } from "lucide-react";
 import { ValidationResult } from "../../core/validator/scannability";
 import { exportSVG, exportRaster, exportPDF } from "../../core/export";
@@ -30,26 +31,34 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   onCopySvg,
   copied
 }) => {
+  const sanitizedQrSvg = useMemo(() => {
+    return DOMPurify.sanitize(qrSvg, { USE_PROFILES: { svg: true, svgFilters: true } });
+  }, [qrSvg]);
+
+  const sanitizedBarcodeSvg = useMemo(() => {
+    return DOMPurify.sanitize(barcodeSvg, { USE_PROFILES: { svg: true, svgFilters: true } });
+  }, [barcodeSvg]);
+
   const targetSvg = activeTab === "qr" ? qrSvg : barcodeSvg;
 
   return (
-    <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-xl flex flex-col items-center sticky top-24">
+    <div className="p-6 rounded-2xl border border-slate-200/90 bg-white shadow-xl shadow-slate-200/50 flex flex-col items-center sticky top-24">
       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 w-full text-center">
         {t.livePreview}
       </h3>
 
       {/* Display Canvas */}
-      <div className="p-4 rounded-xl bg-white shadow-inner border border-slate-100 max-w-full overflow-hidden flex items-center justify-center min-h-[300px]">
+      <div className="p-4 rounded-xl bg-slate-50/80 shadow-inner border border-slate-100 max-w-full overflow-hidden flex items-center justify-center min-h-[300px]">
         {activeTab === "qr" && (
           <div
-            dangerouslySetInnerHTML={{ __html: qrSvg }}
+            dangerouslySetInnerHTML={{ __html: sanitizedQrSvg }}
             className="w-64 h-64 flex items-center justify-center"
           />
         )}
         {activeTab === "barcode" &&
           (isBarcodeValid ? (
             <div
-              dangerouslySetInnerHTML={{ __html: barcodeSvg }}
+              dangerouslySetInnerHTML={{ __html: sanitizedBarcodeSvg }}
               className="max-w-full overflow-x-auto"
             />
           ) : (
@@ -61,7 +70,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
           <div className="text-center py-12 text-slate-400 text-xs font-medium">
             Batch mode active. Previewing first payload:
             <div
-              dangerouslySetInnerHTML={{ __html: qrSvg }}
+              dangerouslySetInnerHTML={{ __html: sanitizedQrSvg }}
               className="w-48 h-48 mx-auto mt-4"
             />
           </div>
@@ -94,7 +103,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
           onClick={() => {
             exportSVG(targetSvg, "omnicode.svg");
           }}
-          className="py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-xs flex items-center justify-center gap-2"
+          className="py-2.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
         >
           <Download className="w-3.5 h-3.5" />
           SVG Vector
@@ -103,17 +112,17 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
           onClick={() => {
             exportPDF(targetSvg, "omnicode.pdf");
           }}
-          className="py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-xs flex items-center justify-center gap-2"
+          className="py-2.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
         >
           <Download className="w-3.5 h-3.5" />
           Print PDF
         </button>
         <button
           onClick={onCopySvg}
-          className="py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-xs flex items-center justify-center gap-2"
+          className="py-2.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
         >
           {copied ? (
-            <Check className="w-3.5 h-3.5 text-emerald-500" />
+            <Check className="w-3.5 h-3.5 text-emerald-600" />
           ) : (
             <Copy className="w-3.5 h-3.5" />
           )}

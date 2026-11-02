@@ -15,7 +15,6 @@ import { PreviewPanel } from "./components/preview/PreviewPanel";
 
 export function App() {
   const [lang, setLang] = useState<"en" | "ar">("ar");
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [activeTab, setActiveTab] = useState<"qr" | "barcode" | "batch">("qr");
 
   // Translation helper
@@ -27,7 +26,7 @@ export function App() {
   const [dotType, setDotType] = useState<DotType>("rounded");
   const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>("extra-rounded");
   const [cornerDotType, setCornerDotType] = useState<CornerDotType>("dot");
-  const [fgColor, setFgColor] = useState("#10b981");
+  const [fgColor, setFgColor] = useState("#059669");
   const [fgColor2, setFgColor2] = useState("#047857");
   const [isGradient, setIsGradient] = useState(true);
   const [bgColor] = useState("#ffffff");
@@ -203,60 +202,56 @@ export function App() {
 
   return (
     <div
-      className={`min-h-screen ${
-        theme === "dark" ? "dark bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
-      } transition-colors duration-200`}
+      className="min-h-screen bg-slate-50 text-slate-900 selection:bg-emerald-100 selection:text-emerald-900"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <Header
         lang={lang}
         setLang={setLang}
-        theme={theme}
-        setTheme={setTheme}
         subtitle={t.subtitle}
       />
 
-      {/* Main Tab Controls */}
-      <div className="max-w-7xl mx-auto px-4 pt-6">
-        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+      {/* Main Tab Controls (Segmented Control) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+        <div className="inline-flex p-1 rounded-xl bg-slate-200/70 border border-slate-200 gap-1 shadow-inner">
           <button
             onClick={() => setActiveTab("qr")}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all ${
+            className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all ${
               activeTab === "qr"
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                ? "bg-white text-emerald-800 shadow-sm border border-slate-200/60 font-bold"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
             }`}
           >
-            <QrCode className="w-4 h-4" />
+            <QrCode className="w-4 h-4 text-emerald-600" />
             {t.tabQr}
           </button>
           <button
             onClick={() => setActiveTab("barcode")}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all ${
+            className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all ${
               activeTab === "barcode"
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                ? "bg-white text-emerald-800 shadow-sm border border-slate-200/60 font-bold"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
             }`}
           >
-            <Barcode className="w-4 h-4" />
+            <Barcode className="w-4 h-4 text-emerald-600" />
             {t.tabBarcode}
           </button>
           <button
             onClick={() => setActiveTab("batch")}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all ${
+            className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all ${
               activeTab === "batch"
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                ? "bg-white text-emerald-800 shadow-sm border border-slate-200/60 font-bold"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
             }`}
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             {t.tabBatch}
           </button>
         </div>
       </div>
 
       {/* Workspace */}
-      <main className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Controls Column */}
         <div className="lg:col-span-7 space-y-6">
           {activeTab === "qr" && (

@@ -15,6 +15,7 @@ const setupMockDoc = () => {
   global.document = dom.window.document;
   global.XMLSerializer = dom.window.XMLSerializer;
 };
+setupMockDoc();
 
 describe("Payload Encoders", () => {
   it("encodes WiFi WPA credentials correctly", () => {
