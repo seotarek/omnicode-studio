@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Omnicode\Qr;
 
 use InvalidArgumentException;
+use LengthException;
+use Omnicode\Security\ColorSanitizer;
 
 /**
  * Enterprise Pure PHP QR Code Generator (ISO/IEC 18004 compliant).
@@ -143,7 +145,7 @@ class QrCodeGenerator
     /**
      * Standard ISO 18004 RS Block Table per version & ECC level (L, M, Q, H).
      */
-    private static function getRSBlocks(int $version, string $ecLevel): array
+    public static function getRSBlocks(int $version, string $ecLevel): array
     {
         $table = [
             // 1
@@ -243,7 +245,17 @@ class QrCodeGenerator
                 return $v;
             }
         }
-        return 10;
+
+        $maxBlocks = self::getRSBlocks(10, $ecLevel);
+        $maxCapacity = 0;
+        foreach ($maxBlocks as $b) {
+            $maxCapacity += $b['dataCount'];
+        }
+        $maxPayloadBytes = $maxCapacity - 3; // 4 bits mode + 16 bits length
+
+        throw new LengthException(
+            "Payload length ({$byteLen} bytes) exceeds maximum QR Code capacity ({$maxPayloadBytes} bytes) for error correction level '{$ecLevel}'."
+        );
     }
 
     /**
@@ -368,45 +380,167 @@ class QrCodeGenerator
         }
     }
 
-    private static function evaluateLostPoints(array $matrix): int
+    /**
+     * Evaluates matrix penalty score using all 4 ISO/IEC 18004 rules.
+     */
+    public static function evaluateLostPoints(array $matrix): int
     {
         $size = count($matrix);
         $lostPoint = 0;
 
-        // Level 1: Same color adjacent modules in rows and cols
+        // Rule 1 (N1 = 3): 5 or more consecutive modules of identical color in row/column
         for ($r = 0; $r < $size; $r++) {
-            for ($c = 0; $c < $size; $c++) {
-                $dark = $matrix[$r][$c];
-                $sameCount = 0;
-                for ($dr = -1; $dr <= 1; $dr++) {
-                    if ($r + $dr < 0 || $r + $dr >= $size) continue;
-                    for ($dc = -1; $dc <= 1; $dc++) {
-                        if ($c + $dc < 0 || $c + $dc >= $size) continue;
-                        if ($dr === 0 && $dc === 0) continue;
-                        if ($dark === $matrix[$r + $dr][$c + $dc]) {
-                            $sameCount++;
-                        }
+            $currentColor = $matrix[$r][0];
+            $currentRun = 1;
+            for ($c = 1; $c < $size; $c++) {
+                if ($matrix[$r][$c] === $currentColor) {
+                    $currentRun++;
+                } else {
+                    if ($currentRun >= 5) {
+                        $lostPoint += 3 + ($currentRun - 5);
                     }
+                    $currentColor = $matrix[$r][$c];
+                    $currentRun = 1;
                 }
-                if ($sameCount > 5) {
-                    $lostPoint += (3 + $sameCount - 5);
-                }
+            }
+            if ($currentRun >= 5) {
+                $lostPoint += 3 + ($currentRun - 5);
             }
         }
 
-        // Level 2: 2x2 blocks of same color
+        for ($c = 0; $c < $size; $c++) {
+            $currentColor = $matrix[0][$c];
+            $currentRun = 1;
+            for ($r = 1; $r < $size; $r++) {
+                if ($matrix[$r][$c] === $currentColor) {
+                    $currentRun++;
+                } else {
+                    if ($currentRun >= 5) {
+                        $lostPoint += 3 + ($currentRun - 5);
+                    }
+                    $currentColor = $matrix[$r][$c];
+                    $currentRun = 1;
+                }
+            }
+            if ($currentRun >= 5) {
+                $lostPoint += 3 + ($currentRun - 5);
+            }
+        }
+
+        // Rule 2 (N2 = 3): 2x2 blocks of same color
         for ($r = 0; $r < $size - 1; $r++) {
             for ($c = 0; $c < $size - 1; $c++) {
-                $cnt = 0;
-                if ($matrix[$r][$c]) $cnt++;
-                if ($matrix[$r + 1][$c]) $cnt++;
-                if ($matrix[$r][$c + 1]) $cnt++;
-                if ($matrix[$r + 1][$c + 1]) $cnt++;
-                if ($cnt === 0 || $cnt === 4) {
+                $color = $matrix[$r][$c];
+                if (
+                    $color === $matrix[$r][$c + 1] &&
+                    $color === $matrix[$r + 1][$c] &&
+                    $color === $matrix[$r + 1][$c + 1]
+                ) {
                     $lostPoint += 3;
                 }
             }
         }
+
+        // Rule 3 (N3 = 40): 1:1:3:1:1 pattern with 4 preceding or trailing light modules
+        // Patterns: 0 0 0 0 1 0 1 1 1 0 1 (11 modules) or 1 0 1 1 1 0 1 0 0 0 0 (11 modules)
+        for ($r = 0; $r < $size; $r++) {
+            for ($c = 0; $c <= $size - 11; $c++) {
+                if (
+                    $matrix[$r][$c + 4] &&
+                    !$matrix[$r][$c + 5] &&
+                    $matrix[$r][$c + 6] &&
+                    $matrix[$r][$c + 7] &&
+                    $matrix[$r][$c + 8] &&
+                    !$matrix[$r][$c + 9] &&
+                    $matrix[$r][$c + 10]
+                ) {
+                    if (
+                        !$matrix[$r][$c] &&
+                        !$matrix[$r][$c + 1] &&
+                        !$matrix[$r][$c + 2] &&
+                        !$matrix[$r][$c + 3]
+                    ) {
+                        $lostPoint += 40;
+                    }
+                }
+
+                if (
+                    $matrix[$r][$c] &&
+                    !$matrix[$r][$c + 1] &&
+                    $matrix[$r][$c + 2] &&
+                    $matrix[$r][$c + 3] &&
+                    $matrix[$r][$c + 4] &&
+                    !$matrix[$r][$c + 5] &&
+                    $matrix[$r][$c + 6]
+                ) {
+                    if (
+                        !$matrix[$r][$c + 7] &&
+                        !$matrix[$r][$c + 8] &&
+                        !$matrix[$r][$c + 9] &&
+                        !$matrix[$r][$c + 10]
+                    ) {
+                        $lostPoint += 40;
+                    }
+                }
+            }
+        }
+
+        for ($c = 0; $c < $size; $c++) {
+            for ($r = 0; $r <= $size - 11; $r++) {
+                if (
+                    $matrix[$r + 4][$c] &&
+                    !$matrix[$r + 5][$c] &&
+                    $matrix[$r + 6][$c] &&
+                    $matrix[$r + 7][$c] &&
+                    $matrix[$r + 8][$c] &&
+                    !$matrix[$r + 9][$c] &&
+                    $matrix[$r + 10][$c]
+                ) {
+                    if (
+                        !$matrix[$r][$c] &&
+                        !$matrix[$r + 1][$c] &&
+                        !$matrix[$r + 2][$c] &&
+                        !$matrix[$r + 3][$c]
+                    ) {
+                        $lostPoint += 40;
+                    }
+                }
+
+                if (
+                    $matrix[$r][$c] &&
+                    !$matrix[$r + 1][$c] &&
+                    $matrix[$r + 2][$c] &&
+                    $matrix[$r + 3][$c] &&
+                    $matrix[$r + 4][$c] &&
+                    !$matrix[$r + 5][$c] &&
+                    $matrix[$r + 6][$c]
+                ) {
+                    if (
+                        !$matrix[$r + 7][$c] &&
+                        !$matrix[$r + 8][$c] &&
+                        !$matrix[$r + 9][$c] &&
+                        !$matrix[$r + 10][$c]
+                    ) {
+                        $lostPoint += 40;
+                    }
+                }
+            }
+        }
+
+        // Rule 4 (N4 = 10): Proportion of dark modules across the entire matrix
+        $totalDark = 0;
+        for ($r = 0; $r < $size; $r++) {
+            for ($c = 0; $c < $size; $c++) {
+                if ($matrix[$r][$c]) {
+                    $totalDark++;
+                }
+            }
+        }
+
+        $totalModules = $size * $size;
+        $darkPercent = ($totalDark / $totalModules) * 100.0;
+        $step = (int) floor(abs($darkPercent - 50.0) / 5.0);
+        $lostPoint += $step * 10;
 
         return $lostPoint;
     }
@@ -592,6 +726,75 @@ class QrCodeGenerator
     }
 
     /**
+     * Validates whether a logo URL is safe from SSRF and script injection.
+     */
+    public static function isSafeLogoUrl(?string $url): bool
+    {
+        if ($url === null || $url === '') {
+            return false;
+        }
+
+        $trimmed = trim($url);
+
+        // Allow safe data URIs for inline images
+        if (preg_match('/^data:image\/(?:png|jpeg|jpg|webp|svg\+xml);base64,[A-Za-z0-9+\/=\s]+$/i', $trimmed) === 1) {
+            return true;
+        }
+
+        // Must start with http:// or https://
+        if (preg_match('/^https?:\/\//i', $trimmed) !== 1) {
+            return false;
+        }
+
+        $parts = parse_url($trimmed);
+        if (!$parts || empty($parts['host'])) {
+            return false;
+        }
+
+        $host = strtolower($parts['host']);
+
+        // Block localhost and IPv6 loopback
+        if ($host === 'localhost' || $host === '::1' || $host === '[::1]') {
+            return false;
+        }
+
+        // Block IPv4 loopback, private networks, link-local, cloud metadata
+        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $ipLong = ip2long($host);
+            if ($ipLong === false) {
+                return false;
+            }
+
+            // 127.0.0.0/8 (Loopback)
+            if (($ipLong & 0xFF000000) === 0x7F000000) {
+                return false;
+            }
+            // 10.0.0.0/8 (Private)
+            if (($ipLong & 0xFF000000) === 0x0A000000) {
+                return false;
+            }
+            // 172.16.0.0/12 (Private)
+            if (($ipLong & 0xFFF00000) === 0xAC100000) {
+                return false;
+            }
+            // 192.168.0.0/16 (Private)
+            if (($ipLong & 0xFFFF0000) === 0xC0A80000) {
+                return false;
+            }
+            // 169.254.0.0/16 (Link Local / Cloud Metadata)
+            if (($ipLong & 0xFFFF0000) === 0xA9FE0000) {
+                return false;
+            }
+            // 0.0.0.0/8
+            if (($ipLong & 0xFF000000) === 0x00000000) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Renders a QR code to vector SVG string.
      *
      * @param array{
@@ -611,11 +814,23 @@ class QrCodeGenerator
     {
         $data = $options['data'] ?? 'https://omnicode.studio';
         $ecLevel = $options['ecLevel'] ?? 'M';
-        $targetSize = $options['size'] ?? 360;
-        $margin = $options['margin'] ?? 16;
-        $fgColor = $options['fgColor'] ?? '#000000';
-        $fgColor2 = $options['fgColor2'] ?? '#2563eb';
-        $bgColor = $options['bgColor'] ?? '#ffffff';
+
+        $targetSize = (int)($options['size'] ?? 360);
+        if ($targetSize < 30 || $targetSize > 4000) {
+            throw new InvalidArgumentException("QR size must be between 30 and 4000 pixels.");
+        }
+
+        $margin = (int)($options['margin'] ?? 16);
+        if ($margin < 0 || $margin > 200) {
+            throw new InvalidArgumentException("QR margin must be between 0 and 200 pixels.");
+        }
+
+        $fgColor = ColorSanitizer::sanitize($options['fgColor'] ?? '#000000', '#000000');
+        $fgColor2 = ColorSanitizer::sanitize($options['fgColor2'] ?? '#2563eb', '#2563eb');
+        $bgColor = ($options['bgColor'] ?? '#ffffff') === 'transparent'
+            ? 'transparent'
+            : ColorSanitizer::sanitize($options['bgColor'] ?? '#ffffff', '#ffffff');
+
         $isGradient = $options['isGradient'] ?? false;
         $dotType = $options['dotType'] ?? 'square';
         $logoUrl = $options['logoUrl'] ?? null;
@@ -660,6 +875,10 @@ class QrCodeGenerator
 
         $logoSvg = '';
         if ($logoUrl !== null && $logoUrl !== '') {
+            if (!self::isSafeLogoUrl($logoUrl)) {
+                throw new InvalidArgumentException("Invalid or unsafe logo URL provided (SSRF / protocol blocked).");
+            }
+
             $safeLogo = htmlspecialchars($logoUrl, ENT_QUOTES | ENT_XML1, 'UTF-8');
             $logoDim = $targetSize * 0.22;
             $logoX = ($targetSize - $logoDim) / 2;

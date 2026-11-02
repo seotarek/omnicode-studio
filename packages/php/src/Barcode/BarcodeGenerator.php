@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Omnicode\Barcode;
 
 use InvalidArgumentException;
+use Omnicode\Security\ColorSanitizer;
 
 /**
  * Enterprise Barcode Generator in Pure PHP (PSR-12).
@@ -212,11 +213,23 @@ class BarcodeGenerator
         $format = strtoupper($options['format'] ?? 'CODE128');
         $data = $options['data'] ?? '';
         $style = $options['style'] ?? 'classic';
-        $lineColor = $options['lineColor'] ?? '#000000';
-        $lineColor2 = $options['lineColor2'] ?? '#2563eb';
-        $background = $options['background'] ?? '#ffffff';
-        $barWidth = $options['width'] ?? 2;
-        $barHeight = $options['height'] ?? 90;
+
+        $barWidth = (int)($options['width'] ?? 2);
+        if ($barWidth < 1 || $barWidth > 10) {
+            throw new InvalidArgumentException("Barcode width must be between 1 and 10.");
+        }
+
+        $barHeight = (int)($options['height'] ?? 90);
+        if ($barHeight < 10 || $barHeight > 1000) {
+            throw new InvalidArgumentException("Barcode height must be between 10 and 1000 pixels.");
+        }
+
+        $lineColor = ColorSanitizer::sanitize($options['lineColor'] ?? '#000000', '#000000');
+        $lineColor2 = ColorSanitizer::sanitize($options['lineColor2'] ?? '#2563eb', '#2563eb');
+        $background = ($options['background'] ?? '#ffffff') === 'transparent'
+            ? 'transparent'
+            : ColorSanitizer::sanitize($options['background'] ?? '#ffffff', '#ffffff');
+
         $headerText = htmlspecialchars($options['headerText'] ?? '', ENT_QUOTES | ENT_XML1, 'UTF-8');
         $footerText = htmlspecialchars($options['footerText'] ?? '', ENT_QUOTES | ENT_XML1, 'UTF-8');
         $displayValue = $options['displayValue'] ?? true;

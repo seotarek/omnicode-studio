@@ -106,4 +106,22 @@ describe("Independent Decoder Verification (ZXing)", () => {
       expect(decoded).toContain("ORG:OmniCode Core");
     }
   });
+
+  it("decodes pure PHP QrCodeGenerator matrix using ZXing", () => {
+    try {
+      const { execSync } = require("child_process");
+      const payload = "https://omnicode.studio/cross-engine-verified";
+      const cmd = `php -r 'require_once "packages/php/vendor/autoload.php"; echo json_encode(Omnicode\\Qr\\QrCodeGenerator::generateMatrix("${payload}", "M"));'`;
+      const output = execSync(cmd, { encoding: "utf8" });
+      const matrix: boolean[][] = JSON.parse(output);
+
+      const decoded = decodeMatrixWithZXing(matrix);
+      expect(decoded).toBe(payload);
+    } catch (e: any) {
+      if (e.message && (e.message.includes("php: command not found") || e.message.includes("php: not found"))) {
+        return;
+      }
+      throw e;
+    }
+  });
 });
