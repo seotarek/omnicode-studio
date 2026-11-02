@@ -1,121 +1,120 @@
-# 🌐 OmniCode Studio: Enterprise QR Code & Barcode Ecosystem
+# OmniCode Studio: Enterprise QR Code & Barcode Suite
 
 [![Deploy to GitHub Pages](https://github.com/seotarek/omnicode-studio/actions/workflows/deploy.yml/badge.svg)](https://github.com/seotarek/omnicode-studio/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Vitest](https://img.shields.io/badge/Tests-8%20Passing-brightgreen.svg)](tests/)
-[![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict%205.x-blue.svg)](tsconfig.json)
-[![Privacy: 100% Client-Side](https://img.shields.io/badge/Privacy-100%25%20Client--Side-purple.svg)](#privacy--security-guarantees)
+[![License: MIT](https://img.shields.io/badge/License-MIT-059669.svg)](https://opensource.org/licenses/MIT)
+[![Tests: Vitest](https://img.shields.io/badge/Tests-8%20Passing-0284c7.svg)](tests/)
+[![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict%205.x-2563eb.svg)](tsconfig.json)
+[![Privacy: Client-Side](https://img.shields.io/badge/Privacy-100%25%20Client--Side-7c3aed.svg)](#privacy-and-security)
 
-> **OmniCode Studio** is an open-source, privacy-first, enterprise-grade vector barcode and QR code generation suite. Designed for businesses, logistics, and developers who demand zero external telemetry, crisp print-ready vector graphics, deterministic scannability verification, and full bilingual (English & Arabic) accessibility.
-
----
-
-## 🚀 Live Demo & Production Deployment
-
-- **Live Web App**: [https://seotarek.github.io/omnicode-studio/](https://seotarek.github.io/omnicode-studio/)
-- **Zero Backend Required**: Runs 100% in your browser. No server tracking, no database, no external API calls.
+Client-side vector barcode and QR code generation suite. Engineered for logistics, enterprise applications, and developers requiring zero external network requests, precise SVG vector output, automated scannability verification, and full bilingual support (English and Arabic).
 
 ---
 
-## ✨ Key Architectural Features
+## Live Application
 
-### 1. 🔲 Advanced QR Code Customizer
-- **Dot Topologies**: `square`, `rounded`, `dots`, `classy`, `classy-rounded`, `extra-rounded`.
-- **Corner Eye Geometries**: Independent styling for Outer Corner Square and Inner Corner Dot (`square`, `rounded`, `extra-rounded`, `dot`).
-- **Gradient Engines**: Linear and Radial dual-color gradient transitions across modules.
-- **Logo Integration & Protection Zone**: Embed custom SVG/PNG/JPEG logos with automatic quiet-zone clipping to prevent scanning errors.
-- **Payload Presets**: Out-of-the-box standard formatters for **WiFi (WPA/WEP)**, **vCard 3.0**, **WhatsApp Direct**, **Email (mailto)**, **SMS**, **Phone (tel)**, **Geo Coordinates**, and **Calendar Events (iCal)**.
-
-### 2. 📊 Enterprise 1D Barcode Engine
-- **Symbologies Supported**:
-  - `CODE128` (Auto A/B/C) - Logistics, shipping labels, inventory.
-  - `EAN-13` & `EAN-8` - Global retail with strict checksum parity checks.
-  - `UPC-A` - North American consumer products.
-  - `CODE39` - Defense, automotive, and industrial inventory.
-  - `ITF-14` - Master corrugated shipping cartons.
-  - `Pharmacode` - Pharmaceutical packaging.
-- **Dynamic Checksum & Format Validation**: Real-time feedback preventing invalid barcodes before export.
-
-### 3. 🛡️ Deterministic Scannability & Contrast Health Meter
-- Calculates **WCAG 2.2 Relative Luminance Contrast Ratio** between foreground and background.
-- Emits real-time warnings if contrast falls below ISO 18004 scanning thresholds (< 4.5:1 recommended, < 2.5:1 critical).
-
-### 4. 📦 Client-Side Batch Generator (ZIP Export)
-- Import CSV or multi-line plain text.
-- Generates batch vector SVGs directly in browser memory and downloads as a single bundled `.zip` archive via `JSZip`.
-
-### 5. 🖨️ Multi-Format High-Resolution Export
-- **Vector**: Clean, infinite-scale `.svg` strings.
-- **Raster**: Ultra-high-resolution `.png` (1200x1200px print-density), `.webp`, `.jpeg`.
-- **Print PDF**: Direct vector `.pdf` output with ISO print margins.
-- **Clipboard**: Quick SVG copy for Figma, Illustrator, and Inkscape.
-
-### 6. 🌐 Native Bilingual Architecture (LTR / RTL)
-- Complete English and Arabic translations with full bidirectional layout support.
+- Web App: [https://seotarek.github.io/omnicode-studio/](https://seotarek.github.io/omnicode-studio/)
+- Architecture: 100% client-side computation. Runs entirely within the browser with zero external API dependencies or telemetry.
 
 ---
 
-## 🏗️ Architecture & Decoupled Engine
+## Technical Capabilities
+
+### 1. Vector QR Code Engine
+- Module Topologies: square, rounded, dots, classy, classy-rounded, extra-rounded.
+- Corner Eyes: Independent geometry configuration for outer squares and inner dots.
+- Gradient Fills: Linear and radial two-tone gradient transitions.
+- Brand Assets: Custom logo embedding with automatic quiet-zone clipping to prevent decoding failures.
+- Standard Formats: WiFi (WPA/WEP/nopass), vCard 3.0, WhatsApp direct links, Email, SMS, Phone, Geo coordinates, and iCalendar events.
+
+### 2. Barcode Generation Engine
+- Supported Symbologies:
+  - CODE128 (Auto A/B/C) - Logistics, shipping containers, asset tracking.
+  - EAN-13 and EAN-8 - International retail product packaging with checksum verification.
+  - UPC-A - Standard North American retail.
+  - CODE39 - Industrial, defense, and automotive inventory management.
+  - ITF-14 - Corrugated master carton identification.
+  - Pharmacode - Pharmaceutical packaging and safety verification.
+- Format Validation: Real-time checksum and regex validation before output generation.
+
+### 3. ISO Scannability & Contrast Evaluation
+- Evaluates WCAG 2.2 Relative Luminance Contrast Ratio between foreground and background colors.
+- Provides real-time warnings when color combinations fall below ISO 18004 readability standards.
+
+### 4. Client-Side Batch Processing
+- Import line-delimited records or CSV files.
+- Generates batch vector SVGs in browser memory and downloads a bundled ZIP archive without transmitting data to a server.
+
+### 5. Multi-Format High-Resolution Export
+- Vector: Scalable SVG strings.
+- Raster: High-density PNG (1200x1200px), WebP, and JPEG.
+- Print PDF: ISO-compliant PDF documents with standard print margins.
+- Direct Copy: Clipboard SVG export for direct insertion into Figma, Illustrator, or Inkscape.
+
+### 6. Bidirectional Architecture (LTR / RTL)
+- Full Arabic (RTL) and English (LTR) interface translations with CSS logical property layout parity.
+
+---
+
+## Architecture & Codebase Structure
 
 ```
 omnicode-studio/
 ├── src/
-│   ├── core/                  # Headless, zero-DOM core engine
+│   ├── core/                  # Headless core generation engine (zero DOM dependencies)
 │   │   ├── qr/                # Scalable dot & corner SVG algorithms
 │   │   ├── barcode/           # Symbology validators & barcode generators
-│   │   ├── payloads/          # Standardized payload builders (WiFi, vCard, etc.)
-│   │   ├── validator/         # WCAG contrast & ISO scannability scoring
-│   │   ├── export.ts          # SVG/Canvas/PDF/ZIP export pipelines
-│   │   └── presets.ts         # High-end aesthetic templates
-│   ├── i18n/                  # English & Arabic dictionaries
-│   ├── App.tsx                # Studio GUI (React + Tailwind)
-│   └── main.tsx               # Browser entrypoint
+│   │   ├── payloads/          # Standard payload builders (WiFi, vCard, etc.)
+│   │   ├── validator/         # WCAG contrast & ISO scannability evaluation
+│   │   ├── export.ts          # SVG, Canvas, PDF, and ZIP export pipelines
+│   │   └── presets.ts         # High-contrast aesthetic presets
+│   ├── i18n/                  # English and Arabic locale dictionaries
+│   ├── App.tsx                # Studio interface (React and Tailwind CSS)
+│   └── main.tsx               # Application bootstrap
 ├── docs/
-│   └── ENTERPRISE_INTEGRATION_ROADMAP.md # Laravel & WordPress integration blueprint
-└── tests/unit/                # Vitest comprehensive unit test suite
+│   └── ENTERPRISE_INTEGRATION_ROADMAP.md # Integration architecture for Laravel and WordPress
+└── tests/unit/                # Vitest unit test suite
 ```
 
 ---
 
-## 🛠️ Local Development & Testing
+## Local Development & Testing
 
 ```bash
-# 1. Clone repository
+# Clone the repository
 git clone https://github.com/seotarek/omnicode-studio.git
 cd omnicode-studio
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Run unit tests
+# Run unit test suite
 npm test
 
-# 4. Start local development server
+# Launch local development server
 npm run dev
 
-# 5. Build production bundle
+# Compile production bundle
 npm run build
 ```
 
 ---
 
-## 🗺️ Enterprise Roadmap (Laravel & WordPress)
+## Integration Roadmap (Laravel & WordPress)
 
-For enterprise platform architects looking to integrate OmniCode into existing ERP, SaaS, or CMS stacks:
-- 👉 Read the full [Enterprise Integration Roadmap](docs/ENTERPRISE_INTEGRATION_ROADMAP.md) detailing upcoming packages:
-  - `omnicode/laravel-omnicode` (Blade directives, fluent facade, queueable batch PDF rendering)
-  - `omnicode-wp` (Gutenberg block & automated WooCommerce fulfillment barcode injection)
-
----
-
-## 🔒 Privacy & Security Guarantees
-
-1. **No External Network Requests**: Code generation runs strictly client-side via JavaScript & SVG math.
-2. **Confidentiality**: Customer credentials (WiFi passwords, contact details, internal URLs) never leave the client device.
-3. **Auditability**: 100% open-source under the permissive MIT license.
+A complete architectural specification is available in the [Enterprise Integration Roadmap](docs/ENTERPRISE_INTEGRATION_ROADMAP.md), covering:
+- `omnicode/laravel-omnicode`: Fluent facade, Blade directives, and queueable batch generation for Laravel applications.
+- `omnicode-wp`: Native Gutenberg custom block and automated WooCommerce fulfillment order labeling.
 
 ---
 
-## 📄 License
+## Privacy and Security
 
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
+- Client-Side Isolation: All mathematical calculations, encoding algorithms, and raster conversions execute in the user browser.
+- Data Confidentiality: Sensitive parameters (WiFi credentials, contact details, internal URLs) are never transmitted over the network.
+- Open Source: Licensed under the MIT License.
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for full terms.
