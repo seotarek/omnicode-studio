@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "OmniCode Studio REST API",
-    "description": "High-performance headless Barcode and QR Code generation, customization, and verification API.",
+    "title": "OmniCode Studio Global REST API",
+    "description": "High-performance headless Barcode and QR Code generation, customization, batch processing, and verification API.",
     "version": "1.0.0",
     "contact": {
       "name": "OmniCode Engineering Team",
@@ -25,13 +25,29 @@
         "summary": "Health Check",
         "description": "Returns status, version, and server timestamp.",
         "responses": {
-          "200": {
-            "description": "Service is healthy"
-          }
+          "200": { "description": "Service is healthy" }
         }
       }
     },
-    "/api/v1/qr/generate": {
+    "/metrics": {
+      "get": {
+        "summary": "Runtime Metrics & Telemetry",
+        "description": "Returns process memory usage, uptime, and Node runtime statistics.",
+        "responses": {
+          "200": { "description": "Service telemetry metrics" }
+        }
+      }
+    },
+    "/api/v1/symbologies": {
+      "get": {
+        "summary": "Supported Symbologies Reference",
+        "description": "Returns detailed specifications of all supported 1D barcodes and 2D QR symbologies.",
+        "responses": {
+          "200": { "description": "List of supported symbologies" }
+        }
+      }
+    },
+    "/api/v1/generate/qr": {
       "post": {
         "summary": "Generate QR Code",
         "description": "Renders vector SVG QR code with custom styles, colors, and error correction.",
@@ -45,6 +61,7 @@
                   "data": { "type": "string", "example": "https://omnicode.studio" },
                   "ecLevel": { "type": "string", "enum": ["L", "M", "Q", "H"], "default": "H" },
                   "size": { "type": "integer", "default": 360 },
+                  "margin": { "type": "integer", "default": 16 },
                   "dotType": { "type": "string", "enum": ["square", "rounded", "dots", "classy", "extra-rounded", "diamond", "star"], "default": "rounded" },
                   "fgColor": { "type": "string", "example": "#059669" },
                   "bgColor": { "type": "string", "example": "#ffffff" },
@@ -58,32 +75,33 @@
         },
         "responses": {
           "200": {
-            "description": "Generated SVG QR Code",
+            "description": "Generated QR Code SVG payload or SVG stream",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "format": { "type": "string" },
+                    "success": { "type": "boolean", "example": true },
+                    "format": { "type": "string", "example": "svg" },
+                    "data": { "type": "string" },
+                    "moduleCount": { "type": "integer" },
                     "svg": { "type": "string" }
                   }
                 }
               },
               "image/svg+xml": {
-                "schema": {
-                  "type": "string"
-                }
+                "schema": { "type": "string", "format": "binary" }
               }
             }
-          }
+          },
+          "400": { "description": "Validation or SSRF error" }
         }
       }
     },
-    "/api/v1/barcode/generate": {
+    "/api/v1/generate/barcode": {
       "post": {
         "summary": "Generate Barcode",
-        "description": "Generates industrial standard barcodes with check digit verification and packaging frame styles.",
+        "description": "Renders validated vector SVG 1D barcode with optional labels and dimensions.",
         "requestBody": {
           "required": true,
           "content": {
@@ -91,12 +109,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "format": { "type": "string", "enum": ["CODE128", "EAN13", "EAN8", "UPC", "CODE39", "ITF14", "pharmacode", "MSI", "codabar"], "default": "CODE128" },
-                  "data": { "type": "string", "example": "4006381333931" },
-                  "style": { "type": "string", "enum": ["classic", "rounded", "pill", "gradient", "thermal-label", "price-tag", "badge-frame", "minimal"], "default": "classic" },
+                  "format": {
+                    "type": "string",
+                    "enum": ["CODE128", "EAN13", "EAN8", "UPC", "ITF14", "MSI", "pharmacode", "codabar"],
+                    "default": "CODE128"
+                  },
+                  "data": { "type": "string", "example": "9780201379624" },
+                  "style": { "type": "string", "enum": ["classic", "badge", "thermal-label"], "default": "classic" },
+                  "width": { "type": "number", "default": 2 },
+                  "height": { "type": "number", "default": 90 },
                   "lineColor": { "type": "string", "default": "#000000" },
-                  "headerText": { "type": "string", "example": "AIR CARGO SHIPMENT" },
-                  "footerText": { "type": "string", "example": "CARRIER VERIFIED" }
+                  "background": { "type": "string", "default": "#ffffff" },
+                  "headerText": { "type": "string" },
+                  "footerText": { "type": "string" },
+                  "displayValue": { "type": "boolean", "default": true }
                 },
                 "required": ["data"]
               }
@@ -105,18 +131,68 @@
         },
         "responses": {
           "200": {
-            "description": "Generated SVG Barcode"
+            "description": "Generated Barcode SVG payload or SVG stream",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "format": { "type": "string", "example": "svg" },
+                    "symbology": { "type": "string", "example": "EAN13" },
+                    "data": { "type": "string" },
+                    "svg": { "type": "string" }
+                  }
+                }
+              },
+              "image/svg+xml": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
           },
-          "422": {
-            "description": "Validation or Check Digit Error"
-          }
+          "422": { "description": "Invalid barcode check-digit or format constraint" }
         }
       }
     },
-    "/api/v1/verify": {
+    "/api/v1/generate/batch": {
       "post": {
-        "summary": "Verify Code and Scannability",
-        "description": "Validates barcode check digits, characters, and QR optical contrast ratio.",
+        "summary": "Batch Generate Codes",
+        "description": "Process a queue of up to 100 mixed QR codes and barcodes in a single request.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "type": { "type": "string", "enum": ["qr", "barcode"] },
+                        "options": { "type": "object" }
+                      },
+                      "required": ["type", "options"]
+                    }
+                  }
+                },
+                "required": ["items"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Batch processing results" },
+          "400": { "description": "Invalid batch request" }
+        }
+      }
+    },
+    "/api/v1/export": {
+      "post": {
+        "summary": "Export Code",
+        "description": "Generates code and exports directly as SVG, Base64, or Data URL.",
         "requestBody": {
           "required": true,
           "content": {
@@ -125,19 +201,45 @@
                 "type": "object",
                 "properties": {
                   "type": { "type": "string", "enum": ["qr", "barcode"] },
-                  "format": { "type": "string", "enum": ["CODE128", "EAN13", "EAN8", "UPC", "CODE39", "ITF14", "pharmacode", "MSI", "codabar"] },
-                  "data": { "type": "string" },
-                  "fgColor": { "type": "string" },
-                  "bgColor": { "type": "string" }
+                  "outputFormat": { "type": "string", "enum": ["svg", "base64", "data-url"], "default": "svg" },
+                  "options": { "type": "object" }
+                },
+                "required": ["type", "options"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Exported code result" }
+        }
+      }
+    },
+    "/api/v1/validate": {
+      "post": {
+        "summary": "Verify & Audit Scannability",
+        "description": "Validates check digits and computes W3C contrast ratio and error tolerance score.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "enum": ["qr", "barcode"], "default": "qr" },
+                  "format": { "type": "string", "example": "EAN13" },
+                  "data": { "type": "string", "example": "4006381333931" },
+                  "fgColor": { "type": "string", "default": "#000000" },
+                  "bgColor": { "type": "string", "default": "#ffffff" },
+                  "ecLevel": { "type": "string", "default": "M" },
+                  "hasLogo": { "type": "boolean", "default": false },
+                  "logoRatio": { "type": "number", "default": 0.2 }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Validation results"
-          }
+          "200": { "description": "Audit and validation score" }
         }
       }
     }

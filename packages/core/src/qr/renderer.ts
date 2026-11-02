@@ -28,8 +28,32 @@ export class QRCodeRenderer {
   private options: QRCodeOptions;
 
   constructor(options: QRCodeOptions) {
-    this.options = options;
+    this.options = {
+      ...options,
+      width: options.width ?? 360,
+      height: options.height ?? 360,
+      margin: options.margin ?? 16,
+      errorCorrectionLevel: options.errorCorrectionLevel ?? "M",
+      dotsOptions: {
+        type: options.dotsOptions?.type ?? "rounded",
+        colorOrGradient: options.dotsOptions?.colorOrGradient ?? { color: "#000000" }
+      },
+      cornersSquareOptions: {
+        type: options.cornersSquareOptions?.type ?? "extra-rounded",
+        colorOrGradient: options.cornersSquareOptions?.colorOrGradient ?? { color: "#000000" }
+      },
+      cornersDotOptions: {
+        type: options.cornersDotOptions?.type ?? "dot",
+        colorOrGradient: options.cornersDotOptions?.colorOrGradient ?? { color: "#000000" }
+      },
+      backgroundOptions: {
+        color: options.backgroundOptions?.color ?? "#ffffff",
+        transparent: options.backgroundOptions?.transparent ?? false
+      }
+    };
   }
+
+
 
   public generateMatrix(): { matrix: boolean[][]; count: number } {
     const qr = qrcode(0, this.options.errorCorrectionLevel);

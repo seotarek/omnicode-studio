@@ -188,4 +188,77 @@ class OmniCodeLaravelTest extends TestCase
         $this->assertStringContainsString('SHELF 4B', $svg);
         $this->assertStringContainsString('AUDITED', $svg);
     }
+
+    public function testFluentQrBuilderViaFacade(): void
+    {
+        $builder = OmniCode::qr();
+        $this->assertInstanceOf(\Omnicode\Builder\QrBuilder::class, $builder);
+
+        $svg = $builder->data('https://laravel.example.com')
+            ->size(300)
+            ->color('#2563EB')
+            ->generate();
+
+        $this->assertStringContainsString('<svg', $svg);
+        $this->assertStringContainsString('#2563EB', $svg);
+    }
+
+    public function testFluentBarcodeBuilderViaFacade(): void
+    {
+        $builder = OmniCode::barcode();
+        $this->assertInstanceOf(\Omnicode\Builder\BarcodeBuilder::class, $builder);
+
+        $svg = $builder->format('EAN13')
+            ->data('4006381333931')
+            ->validate()
+            ->generate();
+
+        $this->assertStringContainsString('<svg', $svg);
+    }
+
+    public function testBatchProcessingAndJob(): void
+    {
+        $items = [
+            [
+                'id' => 'batch-1',
+                'type' => 'qr',
+                'options' => ['data' => 'https://batch-laravel.test']
+            ],
+            [
+                'id' => 'batch-2',
+                'type' => 'barcode',
+                'options' => ['data' => '4006381333931', 'format' => 'EAN13']
+            ]
+        ];
+
+        $results = OmniCode::batch($items);
+        $this->assertCount(2, $results);
+        $this->assertTrue($results[0]['success']);
+        $this->assertTrue($results[1]['success']);
+
+        $job = new \Omnicode\Laravel\Jobs\GenerateCodeBatchJob([
+            [
+                'id' => 'stored-qr',
+                'type' => 'qr',
+                'path' => 'qr1.svg',
+                'data' => 'https://stored-job.test'
+            ]
+        ], 'batches', 'public');
+
+
+        $jobResults = $job->handle();
+        $this->assertCount(1, $jobResults);
+        $this->assertTrue($jobResults[0]['success']);
+        $this->assertNotNull(Storage::disk('public')->get('batches/qr1.svg'));
+    }
+
+    public function testSupportedFormatsMatrix(): void
+    {
+        $formats = OmniCode::getSupportedFormats();
+        $this->assertArrayHasKey('barcodes', $formats);
+        $this->assertContains('CODE128', $formats['barcodes']);
+        $this->assertContains('MSI', $formats['barcodes']);
+        $this->assertContains('codabar', $formats['barcodes']);
+    }
 }
+

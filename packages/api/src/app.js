@@ -12,7 +12,8 @@ import {
   validateBarcodeData,
   calculateMod10CheckDigit,
   validateScannability,
-  calculateContrast
+  calculateContrast,
+  OmniCode
 } from "../../core/dist/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -93,8 +94,87 @@ app.get("/api/v1/spec", (req, res) => {
   }
 });
 
-// Generate QR Code Endpoint
-app.post("/api/v1/qr/generate", (req, res) => {
+// Symbologies Information Endpoint
+app.get("/api/v1/symbologies", (req, res) => {
+  res.json({
+    success: true,
+    symbologies: {
+      qr: {
+        type: "2d",
+        name: "QR Code",
+        standard: "ISO/IEC 18004",
+        errorCorrectionLevels: ["L", "M", "Q", "H"],
+        maxCapacityBytes: 2953,
+        supportsGradients: true,
+        supportsLogos: true
+      },
+      barcodes: [
+        {
+          format: "CODE128",
+          name: "Code 128 (Auto A/B/C)",
+          type: "1d",
+          characterSet: "ASCII 0-127",
+          checkDigit: "Modulo 103"
+        },
+        {
+          format: "EAN13",
+          name: "EAN-13",
+          type: "1d",
+          length: 13,
+          characterSet: "Numeric (0-9)",
+          checkDigit: "GS1 Modulo 10"
+        },
+        {
+          format: "EAN8",
+          name: "EAN-8",
+          type: "1d",
+          length: 8,
+          characterSet: "Numeric (0-9)",
+          checkDigit: "GS1 Modulo 10"
+        },
+        {
+          format: "UPC",
+          name: "UPC-A",
+          type: "1d",
+          length: 12,
+          characterSet: "Numeric (0-9)",
+          checkDigit: "GS1 Modulo 10"
+        },
+        {
+          format: "ITF14",
+          name: "ITF-14",
+          type: "1d",
+          length: 14,
+          characterSet: "Numeric (0-9)",
+          checkDigit: "GS1 Modulo 10"
+        },
+        {
+          format: "MSI",
+          name: "MSI Plessey",
+          type: "1d",
+          characterSet: "Numeric (0-9)",
+          checkDigit: "Mod 10 / Luhn"
+        },
+        {
+          format: "codabar",
+          name: "Codabar (NW-7)",
+          type: "1d",
+          characterSet: "Numeric (0-9), symbols (-$:/.+), delimiters (A, B, C, D)"
+        },
+        {
+          format: "pharmacode",
+          name: "Pharmacode",
+          type: "1d",
+          range: "3 to 131070",
+          characterSet: "Numeric integer"
+        }
+      ]
+    }
+  });
+});
+
+// QR Code Generation Handler
+function handleQrGenerate(req, res) {
   try {
     const {
       data = "https://omnicode.studio",
@@ -206,10 +286,10 @@ app.post("/api/v1/qr/generate", (req, res) => {
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
-});
+}
 
-// Generate Barcode Endpoint
-app.post("/api/v1/barcode/generate", (req, res) => {
+// Barcode Generation Handler
+function handleBarcodeGenerate(req, res) {
   try {
     const {
       format = "CODE128",
@@ -285,10 +365,10 @@ app.post("/api/v1/barcode/generate", (req, res) => {
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
-});
+}
 
-// Scannability & Validation Endpoint
-app.post("/api/v1/verify", (req, res) => {
+// Verification Handler
+function handleVerify(req, res) {
   try {
     const {
       type = "qr",
@@ -345,6 +425,99 @@ app.post("/api/v1/verify", (req, res) => {
     };
 
     res.json(response);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+}
+
+// Register QR & Barcode generation routes (both legacy and new REST specs)
+app.post("/api/v1/qr/generate", handleQrGenerate);
+app.post("/api/v1/generate/qr", handleQrGenerate);
+
+app.post("/api/v1/barcode/generate", handleBarcodeGenerate);
+app.post("/api/v1/generate/barcode", handleBarcodeGenerate);
+
+app.post("/api/v1/verify", handleVerify);
+app.post("/api/v1/validate", handleVerify);
+
+// Batch Generation Endpoint
+app.post("/api/v1/generate/batch", (req, res) => {
+  try {
+    const { items } = req.body;
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({
+        success: false,
+        error: "'items' array is required"
+      });
+    }
+
+    if (items.length > 100) {
+      return res.status(400).json({
+        success: false,
+        error: "Batch items limit exceeded (maximum 100 items per request)"
+      });
+    }
+
+    const results = OmniCode.batch(items);
+    res.json({
+      success: true,
+      count: results.length,
+      results
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Export Endpoint
+app.post("/api/v1/export", (req, res) => {
+  try {
+    const { type = "qr", outputFormat = "svg", options = {} } = req.body;
+    let svg = "";
+
+    if (type === "qr") {
+      const qrRes = OmniCode.generateQr(options);
+      svg = qrRes.svgString;
+    } else if (type === "barcode") {
+      const validation = OmniCode.validateBarcode(options.format || "CODE128", options.data);
+      if (!validation.isValid) {
+        return res.status(422).json({ success: false, error: validation.error });
+      }
+      svg = OmniCode.generateBarcode(options);
+    } else {
+      return res.status(400).json({ success: false, error: `Invalid type '${type}'` });
+    }
+
+    if (outputFormat === "base64") {
+      return res.json({
+        success: true,
+        type,
+        outputFormat: "base64",
+        data: OmniCode.toBase64(svg)
+      });
+    }
+
+    if (outputFormat === "data-url") {
+      return res.json({
+        success: true,
+        type,
+        outputFormat: "data-url",
+        dataUrl: OmniCode.toDataUrl(svg)
+      });
+    }
+
+    const acceptHeader = req.headers.accept || "";
+    if (acceptHeader.includes("image/svg+xml")) {
+      res.setHeader("Content-Type", "image/svg+xml");
+      return res.send(svg);
+    }
+
+    res.json({
+      success: true,
+      type,
+      outputFormat: "svg",
+      svg
+    });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }

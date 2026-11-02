@@ -93,3 +93,39 @@ if (!class_exists(\Illuminate\Support\Facades\Facade::class)) {
         }
     ');
 }
+
+if (!trait_exists(\Illuminate\Foundation\Bus\Dispatchable::class)) {
+    eval('
+        namespace Illuminate\Foundation\Bus;
+        trait Dispatchable {}
+    ');
+}
+
+if (!trait_exists(\Illuminate\Bus\Queueable::class)) {
+    eval('
+        namespace Illuminate\Bus;
+        trait Queueable {}
+    ');
+}
+
+if (!interface_exists(\Illuminate\Contracts\Queue\ShouldQueue::class)) {
+    eval('
+        namespace Illuminate\Contracts\Queue;
+        interface ShouldQueue {}
+    ');
+}
+
+if (!trait_exists(\Illuminate\Queue\InteractsWithQueue::class)) {
+    eval('
+        namespace Illuminate\Queue;
+        trait InteractsWithQueue {}
+    ');
+}
+
+if (!trait_exists(\Illuminate\Queue\SerializesModels::class)) {
+    eval('
+        namespace Illuminate\Queue;
+        trait SerializesModels {}
+    ');
+}
+

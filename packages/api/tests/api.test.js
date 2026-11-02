@@ -306,4 +306,97 @@ describe("OmniCode REST API Integration Suite", () => {
       });
     });
   });
+
+  describe("Global REST Endpoints (Prompt 2 Specification)", () => {
+    it("GET /api/v1/symbologies returns full 1D and 2D specifications", async () => {
+      const res = await request(app).get("/api/v1/symbologies");
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.symbologies.qr.standard).toBe("ISO/IEC 18004");
+      expect(res.body.symbologies.barcodes.some((b) => b.format === "EAN13")).toBe(true);
+      expect(res.body.symbologies.barcodes.some((b) => b.format === "MSI")).toBe(true);
+      expect(res.body.symbologies.barcodes.some((b) => b.format === "codabar")).toBe(true);
+    });
+
+    it("POST /api/v1/generate/qr alias generates valid QR code", async () => {
+      const res = await request(app)
+        .post("/api/v1/generate/qr")
+        .send({ data: "https://global.omnicode.studio" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.svg).toContain("<svg");
+    });
+
+    it("POST /api/v1/generate/barcode alias generates valid barcode", async () => {
+      const res = await request(app)
+        .post("/api/v1/generate/barcode")
+        .send({ format: "EAN13", data: "4006381333931" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.svg).toContain("<svg");
+    });
+
+    it("POST /api/v1/validate alias verifies check digit and scannability", async () => {
+      const res = await request(app)
+        .post("/api/v1/validate")
+        .send({
+          type: "barcode",
+          format: "EAN13",
+          data: "4006381333931",
+          fgColor: "#000000",
+          bgColor: "#ffffff"
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.barcode.isValid).toBe(true);
+      expect(res.body.scannability.isScannable).toBe(true);
+    });
+
+    it("POST /api/v1/generate/batch handles mixed batch requests", async () => {
+      const res = await request(app)
+        .post("/api/v1/generate/batch")
+        .send({
+          items: [
+            { id: "q1", type: "qr", options: { data: "https://item1.test" } },
+            { id: "b1", type: "barcode", options: { format: "EAN13", data: "4006381333931" } }
+          ]
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.count).toBe(2);
+      expect(res.body.results[0].success).toBe(true);
+      expect(res.body.results[1].success).toBe(true);
+    });
+
+    it("POST /api/v1/export supports SVG, Base64, and Data URL exports", async () => {
+      const b64Res = await request(app)
+        .post("/api/v1/export")
+        .send({
+          type: "qr",
+          outputFormat: "base64",
+          options: { data: "https://export-b64.test" }
+        });
+
+      expect(b64Res.status).toBe(200);
+      expect(b64Res.body.outputFormat).toBe("base64");
+      expect(b64Res.body.data.length).toBeGreaterThan(50);
+
+      const dataUrlRes = await request(app)
+        .post("/api/v1/export")
+        .send({
+          type: "barcode",
+          outputFormat: "data-url",
+          options: { format: "CODE128", data: "EXPORT-DATA" }
+        });
+
+      expect(dataUrlRes.status).toBe(200);
+      expect(dataUrlRes.body.outputFormat).toBe("data-url");
+      expect(dataUrlRes.body.dataUrl.startsWith("data:image/svg+xml;base64,")).toBe(true);
+    });
+  });
 });
+

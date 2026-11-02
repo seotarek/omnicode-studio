@@ -34,10 +34,11 @@ jobs:
         run: npm ci
 
       - name: Build Core Package
-        run: npx tsc -p packages/core/tsconfig.json
+        run: npm run build --prefix packages/core
 
       - name: Run Studio & Core Test Suite
         run: npm test
+
 
       - name: Build Studio Application
         run: npm run build
@@ -170,7 +171,15 @@ jobs:
             exit 1
           fi
 
+          # 8. Batch Generation Verification
+          BATCH_RES=$(curl -s -X POST http://localhost:8080/api/v1/generate/batch \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: docker-smoke-secret" \
+            -d '{"items":[{"type":"qr","options":{"data":"https://batch.test"}},{"type":"barcode","options":{"format":"CODE128","data":"BATCH-123"}}]}')
+          echo "$BATCH_RES" | grep '"count":2' || (echo "Batch generation failed: $BATCH_RES" && docker logs api-smoke && exit 1)
+
           docker stop api-smoke
+
 
   deploy-pages:
     name: Deploy to GitHub Pages

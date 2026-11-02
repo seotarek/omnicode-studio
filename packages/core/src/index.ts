@@ -49,3 +49,12 @@ export {
 
 // Presets
 export { DESIGN_PRESETS, type DesignPreset } from "./presets.js";
+
+// Unified Engine & Plugin Architecture
+export {
+  OmniCode,
+  type OmniCodePlugin,
+  type BatchItem,
+  type BatchResult
+} from "./engine.js";
+
