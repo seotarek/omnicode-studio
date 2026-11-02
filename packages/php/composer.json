@@ -1,0 +1,30 @@
+{
+  "name": "omnicode/omnicode-php",
+  "description": "High-performance enterprise headless Barcode and QR Code generation engine for PHP",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "OmniCode Studio Engineering Team",
+      "email": "engineering@omnicode.studio"
+    }
+  ],
+  "require": {
+    "php": "^8.1 || ^8.2 || ^8.3 || ^8.4 || ^8.5"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0 || ^11.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Omnicode\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Omnicode\\Tests\\": "tests/"
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

@@ -1,125 +1,161 @@
-# OmniCode Studio: Enterprise QR Code & Barcode Suite
+# OmniCode Studio: Global Multi-Tier Code Generation Ecosystem
 
 [![Deploy to GitHub Pages](https://github.com/seotarek/omnicode-studio/actions/workflows/deploy.yml/badge.svg)](https://github.com/seotarek/omnicode-studio/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-059669.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Vitest](https://img.shields.io/badge/Tests-8%20Passing-0284c7.svg)](tests/)
-[![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict%205.x-2563eb.svg)](tsconfig.json)
-[![Privacy: Client-Side](https://img.shields.io/badge/Privacy-100%25%20Client--Side-7c3aed.svg)](#privacy-and-security)
+[![Tests: Vitest](https://img.shields.io/badge/TypeScript%20Tests-27%20Passing-0284c7.svg)](tests/)
+[![Tests: PHPUnit](https://img.shields.io/badge/PHPUnit%20Tests-8%20Passing%20(24%20Assertions)-777bb4.svg)](packages/php/tests/)
+[![Security: 0 Vulnerabilities](https://img.shields.io/badge/Security-0%20Vulnerabilities-059669.svg)](#security-and-privacy)
 
-Client-side vector barcode and QR code generation suite. Engineered for logistics, enterprise applications, and developers requiring zero external network requests, precise SVG vector output, automated scannability verification, and full bilingual support (English and Arabic).
-
-
-<div align="center">
-  <img src="./docs/assets/studio-preview.png" alt="OmniCode Studio Interface Preview" width="100%" />
-</div>
+OmniCode is an enterprise-grade multi-tier ecosystem for generating, customizing, and verifying barcodes and QR codes. Engineered for headless execution across Node.js, PHP, Laravel, Docker microservices, and client-side web applications.
 
 ---
 
-## Live Application
+## Ecosystem Architecture
 
-- Web App: [https://seotarek.github.io/omnicode-studio/](https://seotarek.github.io/omnicode-studio/)
-- Architecture: 100% client-side computation. Runs entirely within the browser with zero external API dependencies or telemetry.
-
----
-
-## Technical Capabilities
-
-### 1. Vector QR Code Engine
-- Module Topologies: square, rounded, dots, classy, classy-rounded, extra-rounded.
-- Corner Eyes: Independent geometry configuration for outer squares and inner dots.
-- Gradient Fills: Linear and radial two-tone gradient transitions.
-- Brand Assets: Custom logo embedding with automatic quiet-zone clipping to prevent decoding failures.
-- Standard Formats: WiFi (WPA/WEP/nopass), vCard 3.0, WhatsApp direct links, Email, SMS, Phone, Geo coordinates, and iCalendar events.
-
-### 2. Barcode Generation Engine
-- Supported Symbologies:
-  - CODE128 (Auto A/B/C) - Logistics, shipping containers, asset tracking.
-  - EAN-13 and EAN-8 - International retail product packaging with checksum verification.
-  - UPC-A - Standard North American retail.
-  - CODE39 - Industrial, defense, and automotive inventory management.
-  - ITF-14 - Corrugated master carton identification.
-  - Pharmacode - Pharmaceutical packaging and safety verification.
-- Format Validation: Real-time checksum and regex validation before output generation.
-
-### 3. ISO Scannability & Contrast Evaluation
-- Evaluates WCAG 2.2 Relative Luminance Contrast Ratio between foreground and background colors.
-- Provides real-time warnings when color combinations fall below ISO 18004 readability standards.
-
-### 4. Client-Side Batch Processing
-- Import line-delimited records or CSV files.
-- Generates batch vector SVGs in browser memory and downloads a bundled ZIP archive without transmitting data to a server.
-
-### 5. Multi-Format High-Resolution Export
-- Vector: Scalable SVG strings.
-- Raster: High-density PNG (1200x1200px), WebP, and JPEG.
-- Print PDF: ISO-compliant PDF documents with standard print margins.
-- Direct Copy: Clipboard SVG export for direct insertion into Figma, Illustrator, or Inkscape.
-
-### 6. Bidirectional Architecture (LTR / RTL)
-- Full Arabic (RTL) and English (LTR) interface translations with CSS logical property layout parity.
-
----
-
-## Architecture & Codebase Structure
+The OmniCode ecosystem is organized into three distinct tiers:
 
 ```
 omnicode-studio/
-├── src/
-│   ├── core/                  # Headless core generation engine (zero DOM dependencies)
-│   │   ├── qr/                # Scalable dot & corner SVG algorithms
-│   │   ├── barcode/           # Symbology validators & barcode generators
-│   │   ├── payloads/          # Standard payload builders (WiFi, vCard, etc.)
-│   │   ├── validator/         # WCAG contrast & ISO scannability evaluation
-│   │   ├── export.ts          # SVG, Canvas, PDF, and ZIP export pipelines
-│   │   └── presets.ts         # High-contrast aesthetic presets
-│   ├── i18n/                  # English and Arabic locale dictionaries
-│   ├── App.tsx                # Studio interface (React and Tailwind CSS)
-│   └── main.tsx               # Application bootstrap
-├── docs/
-│   └── ENTERPRISE_INTEGRATION_ROADMAP.md # Integration architecture for Laravel and WordPress
-└── tests/unit/                # Vitest unit test suite
+├── packages/
+│   ├── core/                  # Tier 1: @omnicode/core (Headless TypeScript engine)
+│   ├── php/                   # Tier 2: omnicode/omnicode-php (PSR-4 / PSR-12 pure PHP library)
+│   ├── laravel/               # Tier 2: omnicode/laravel-omnicode (Laravel ServiceProvider, Facade & Blade)
+│   └── api/                   # Tier 3: @omnicode/api (Self-hosted REST API & Docker container)
+├── src/                       # Web Studio interface (React 18, Vite & Tailwind CSS)
+│   ├── components/            # Modular UI components (QR, Barcode, Batch, Preview, Layout)
+│   ├── core/                  # Core vector generation pipelines
+│   └── i18n/                  # Full English & Arabic bidirectional localization
+├── tests/                     # Unit and ZXing independent round-trip decoding test suites
+└── docs/                      # Architectural specifications & integration roadmaps
 ```
 
 ---
 
-## Local Development & Testing
+## Tier 1: OmniCode Core Engine (`@omnicode/core`)
+
+Headless, environment-agnostic TypeScript generation engine. Runs in Node.js, Browsers, Bun, Deno, and Edge functions.
+
+- **Zero Heavy Binary Dependencies**: Generates vector SVG and raw boolean matrices directly in memory.
+- **GS1 Modulo 10 Check Digits**: Automatic validation and computation for EAN-13, EAN-8, UPC-A, and ITF-14.
+- **Symbologies Supported**: CODE128, CODE39, EAN-13, EAN-8, UPC-A, ITF-14, and Pharmacode.
+- **Topologies**: Square, Rounded, Dots, Classy, Extra-Rounded, Diamond, Star, Horizontal & Vertical Bars.
+- **Payload Encoders**: WiFi (WPA/WEP), vCard 3.0, WhatsApp, Email, Phone, SMS, Geo, and Cryptocurrency.
+- **Optical Scannability**: ISO/IEC contrast calculations and hardware scannability diagnostics.
 
 ```bash
-# Clone the repository
-git clone https://github.com/seotarek/omnicode-studio.git
-cd omnicode-studio
-
-# Install dependencies
+cd packages/core
 npm install
-
-# Run unit test suite
-npm test
-
-# Launch local development server
-npm run dev
-
-# Compile production bundle
 npm run build
 ```
 
 ---
 
-## Integration Roadmap (Laravel & WordPress)
+## Tier 2: PHP & Laravel SDKs
 
-A complete architectural specification is available in the [Enterprise Integration Roadmap](docs/ENTERPRISE_INTEGRATION_ROADMAP.md), covering:
-- `omnicode/laravel-omnicode`: Fluent facade, Blade directives, and queueable batch generation for Laravel applications.
-- `omnicode-wp`: Native Gutenberg custom block and automated WooCommerce fulfillment order labeling.
+### 1. `omnicode/omnicode-php`
+Pure PHP implementation for PHP 8.1+ conforming to PSR-4 and PSR-12. No ImageMagick or Ghostscript requirements.
+
+```bash
+composer require omnicode/omnicode-php
+```
+
+```php
+use Omnicode\OmniCode;
+
+// Generate thermal warehouse label
+$svg = OmniCode::barcode('LOGISTICS-9942', 'CODE128', [
+    'style' => 'thermal-label',
+    'headerText' => 'WAREHOUSE AIR SHIPMENT',
+    'footerText' => 'CARRIER VERIFIED'
+]);
+
+// Generate vector QR code
+$qrSvg = OmniCode::qr('https://omnicode.studio', ['ecLevel' => 'H', 'dotType' => 'rounded']);
+```
+
+### 2. `omnicode/laravel-omnicode`
+Official Laravel package compatible with Laravel 10 and 11.
+
+- **Auto-Discovery**: Automatic ServiceProvider and Facade registration.
+- **Blade Components**: `<x-omnicode-qr :data="$url" />` and `<x-omnicode-barcode :data="$sku" format="EAN13" />`.
+- **Storage Disks**: Store generated SVGs directly to S3 or local disks with `OmniCode::storeQr(...)`.
+- **Asynchronous Queues**: Queueable `GenerateCodeJob` for high-throughput batch generation.
+
+```blade
+<x-omnicode-qr :data="$invoice->payment_url" :size="300" :ecc="'H'" :dotType="'rounded'" />
+
+<x-omnicode-barcode 
+    :data="$shipment->tracking_number" 
+    format="CODE128" 
+    style="thermal-label" 
+    header="AIR LOGISTICS" 
+    footer="CARRIER APPROVED" 
+/>
+```
 
 ---
 
-## Privacy and Security
+## Tier 3: Self-Hosted REST API (`@omnicode/api`)
 
-- Client-Side Isolation: All mathematical calculations, encoding algorithms, and raster conversions execute in the user browser.
-- Data Confidentiality: Sensitive parameters (WiFi credentials, contact details, internal URLs) are never transmitted over the network.
-- Open Source: Licensed under the MIT License.
+Lightweight microservice providing language-agnostic HTTP endpoints for Python, Go, C#, Java, and Ruby integrations.
+
+### Docker Deployment
+
+```bash
+cd packages/api
+docker compose up -d --build
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Health check & system version status |
+| `GET` | `/api/v1/spec` | Full OpenAPI 3.0.3 JSON schema |
+| `POST` | `/api/v1/qr/generate` | Generate styled vector QR code (JSON or SVG stream) |
+| `POST` | `/api/v1/barcode/generate` | Generate industrial barcode with GS1 check digit verification |
+| `POST` | `/api/v1/verify` | Check barcode check digit and QR optical contrast ratio |
+
+```bash
+# Generate QR code via cURL
+curl -X POST http://localhost:8080/api/v1/qr/generate \
+  -H "Content-Type: application/json" \
+  -d '{"data": "https://omnicode.studio", "ecLevel": "H"}'
+```
 
 ---
 
-## License
+## Live Web Studio Application
 
-MIT License. See [LICENSE](LICENSE) for full terms.
+- **Live URL**: [https://seotarek.github.io/omnicode-studio/](https://seotarek.github.io/omnicode-studio/)
+- **Architecture**: 100% offline-first client-side computation. Runs entirely within the browser with zero external network tracking.
+- **Bilingual Interface**: Seamless English and Arabic localization with full CSS logical property layout parity.
+
+---
+
+## Testing & Quality Assurance
+
+The ecosystem enforces deterministic quality gates across all languages:
+
+```bash
+# Run root TypeScript unit and ZXing decoder tests (27 tests)
+npm test
+
+# Run PHPUnit test suite (8 tests, 24 assertions)
+cd packages/php && ./vendor/bin/phpunit
+
+# Run REST API integration test suite (7 tests)
+cd packages/api && npm test
+
+# Production build verification
+npm run build
+```
+
+---
+
+## Security and Privacy
+
+- **Zero-Telemetry**: No user data, barcode payloads, or credentials are transmitted over external networks.
+- **Strict Check Digit Enforcement**: Barcodes with invalid GS1 check digits are rejected at the validator layer prior to rendering.
+- **XSS & Injection Protection**: All label text, header parameters, and logo URLs are sanitized against SVG/DOM injection vulnerabilities.
+- **License**: MIT License. See [LICENSE](LICENSE) for details.

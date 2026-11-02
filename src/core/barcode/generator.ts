@@ -1,3 +1,30 @@
+
+function sanitizeSvgText(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+
+/**
+ * Calculates GS1 Modulo 10 Check Digit (for EAN-13, EAN-8, UPC-A, ITF-14)
+ * Weight alternation: for EAN-13 / UPC-A / EAN-8 / ITF-14
+ */
+export function calculateMod10CheckDigit(digits: string): number {
+  let sum = 0;
+  const len = digits.length;
+  // Starting from the rightmost payload digit backwards:
+  // Odd positions from right get weight 3, even get weight 1
+  for (let i = len - 1, weight = 3; i >= 0; i--, weight = weight === 3 ? 1 : 3) {
+    sum += parseInt(digits[i], 10) * weight;
+  }
+  const mod = sum % 10;
+  return mod === 0 ? 0 : 10 - mod;
+}
+
 import JsBarcode from "jsbarcode";
 
 export type BarcodeFormat =
@@ -42,37 +69,80 @@ export function validateBarcodeData(format: BarcodeFormat, data: string): { isVa
   if (!data) return { isValid: false, error: "Data cannot be empty" };
 
   switch (format) {
-    case "EAN13":
+    case "EAN13": {
       if (!/^\d{12,13}$/.test(data)) {
         return { isValid: false, error: "EAN-13 must be 12 or 13 numeric digits" };
       }
+      if (data.length === 13) {
+        const expected = calculateMod10CheckDigit(data.slice(0, 12));
+        const actual = parseInt(data[12], 10);
+        if (expected !== actual) {
+          return { isValid: false, error: `Invalid EAN-13 check digit: expected ${expected}, got ${actual}` };
+        }
+      }
       break;
-    case "EAN8":
+    }
+    case "EAN8": {
       if (!/^\d{7,8}$/.test(data)) {
         return { isValid: false, error: "EAN-8 must be 7 or 8 numeric digits" };
       }
+      if (data.length === 8) {
+        const expected = calculateMod10CheckDigit(data.slice(0, 7));
+        const actual = parseInt(data[7], 10);
+        if (expected !== actual) {
+          return { isValid: false, error: `Invalid EAN-8 check digit: expected ${expected}, got ${actual}` };
+        }
+      }
       break;
-    case "UPC":
+    }
+    case "UPC": {
       if (!/^\d{11,12}$/.test(data)) {
         return { isValid: false, error: "UPC-A must be 11 or 12 numeric digits" };
       }
+      if (data.length === 12) {
+        const expected = calculateMod10CheckDigit(data.slice(0, 11));
+        const actual = parseInt(data[11], 10);
+        if (expected !== actual) {
+          return { isValid: false, error: `Invalid UPC-A check digit: expected ${expected}, got ${actual}` };
+        }
+      }
       break;
-    case "ITF14":
+    }
+    case "ITF14": {
       if (!/^\d{13,14}$/.test(data)) {
         return { isValid: false, error: "ITF-14 must be 13 or 14 numeric digits" };
       }
-      break;
-    case "pharmacode":
-      const num = parseInt(data, 10);
-      if (isNaN(num) || num < 3 || num > 131070) {
-        return { isValid: false, error: "Pharmacode must be an integer between 3 and 131070" };
+      if (data.length === 14) {
+        const expected = calculateMod10CheckDigit(data.slice(0, 13));
+        const actual = parseInt(data[13], 10);
+        if (expected !== actual) {
+          return { isValid: false, error: `Invalid ITF-14 check digit: expected ${expected}, got ${actual}` };
+        }
       }
       break;
-    case "CODE39":
+    }
+    case "pharmacode": {
+      if (!/^\d+$/.test(data)) {
+        return { isValid: false, error: "Pharmacode must contain only numeric digits" };
+      }
+      const num = parseInt(data, 10);
+      if (isNaN(num) || num < 3 || num > 131070) {
+        return { isValid: false, error: "Pharmacode value must be strictly between 3 and 131070" };
+      }
+      break;
+    }
+    case "CODE39": {
       if (!/^[0-9A-Z\-\.\ \$\+\%]+$/.test(data)) {
         return { isValid: false, error: "CODE39 only supports uppercase alphanumeric and - . $ / + %" };
       }
       break;
+    }
+    case "codabar": {
+      if (!/^[A-Da-d][0-9\-\$\:\/\.\+]+[A-Da-d]$/.test(data)) {
+        return { isValid: false, error: "Codabar must start and end with A, B, C, or D" };
+      }
+      break;
+    }
     default:
       break;
   }
@@ -146,6 +216,9 @@ export function generateBarcodeSVG(options: BarcodeOptions): string {
     const totalW = baseWidth + pad * 2;
     const totalH = baseHeight + pad * 2 + headerH + footerH;
 
+    const sanitizedHeader = options.headerText ? sanitizeSvgText(options.headerText) : "";
+    const sanitizedFooter = options.footerText ? sanitizeSvgText(options.footerText) : "";
+
     const wrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     wrapper.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     wrapper.setAttribute("viewBox", "0 0 " + totalW + " " + totalH);
@@ -160,24 +233,24 @@ export function generateBarcodeSVG(options: BarcodeOptions): string {
       frameMarkup =
         "<rect width=\"" + totalW + "\" height=\"" + totalH + "\" fill=\"" + bgFill + "\" stroke=\"#000000\" stroke-width=\"3\" rx=\"4\" />" +
         "<line x1=\"0\" y1=\"" + (headerH + 16) + "\" x2=\"" + totalW + "\" y2=\"" + (headerH + 16) + "\" stroke=\"#000000\" stroke-width=\"2\" />" +
-        "<text x=\"" + pad + "\" y=\"" + (headerH + 4) + "\" font-family=\"Courier New, monospace\" font-weight=\"bold\" font-size=\"13\" fill=\"#000000\">" + (options.headerText || "LOGISTICS SHIPMENT TRACKING") + "</text>" +
+        "<text x=\"" + pad + "\" y=\"" + (headerH + 4) + "\" font-family=\"Courier New, monospace\" font-weight=\"bold\" font-size=\"13\" fill=\"#000000\">" + (sanitizedHeader || "LOGISTICS SHIPMENT TRACKING") + "</text>" +
         "<line x1=\"0\" y1=\"" + (totalH - footerH - 12) + "\" x2=\"" + totalW + "\" y2=\"" + (totalH - footerH - 12) + "\" stroke=\"#000000\" stroke-width=\"2\" />" +
-        "<text x=\"" + pad + "\" y=\"" + (totalH - 12) + "\" font-family=\"Courier New, monospace\" font-size=\"11\" fill=\"#333333\">" + (options.footerText || ("FORMAT: " + options.format + " | CARRIER APPROVED")) + "</text>";
+        "<text x=\"" + pad + "\" y=\"" + (totalH - 12) + "\" font-family=\"Courier New, monospace\" font-size=\"11\" fill=\"#333333\">" + (sanitizedFooter || ("FORMAT: " + options.format + " | CARRIER APPROVED")) + "</text>";
     } else if (isPriceTag) {
       // Retail store price sticker
       frameMarkup =
         "<rect width=\"" + totalW + "\" height=\"" + totalH + "\" fill=\"" + bgFill + "\" stroke=\"#e2e8f0\" stroke-width=\"2\" rx=\"12\" />" +
         "<rect x=\"0\" y=\"0\" width=\"" + totalW + "\" height=\"" + (headerH + 12) + "\" fill=\"" + (options.lineColor || "#059669") + "\" rx=\"12\" />" +
         "<rect x=\"0\" y=\"" + headerH + "\" width=\"" + totalW + "\" height=\"12\" fill=\"" + (options.lineColor || "#059669") + "\" />" +
-        "<text x=\"" + (totalW / 2) + "\" y=\"" + (headerH + 2) + "\" font-family=\"sans-serif\" font-weight=\"bold\" font-size=\"13\" fill=\"#ffffff\" text-anchor=\"middle\">" + (options.headerText || "STORE INVENTORY ITEM") + "</text>" +
-        "<text x=\"" + (totalW / 2) + "\" y=\"" + (totalH - 10) + "\" font-family=\"sans-serif\" font-weight=\"bold\" font-size=\"14\" fill=\"" + (options.lineColor || "#059669") + "\" text-anchor=\"middle\">" + (options.footerText || "PRICE: $99.99") + "</text>";
+        "<text x=\"" + (totalW / 2) + "\" y=\"" + (headerH + 2) + "\" font-family=\"sans-serif\" font-weight=\"bold\" font-size=\"13\" fill=\"#ffffff\" text-anchor=\"middle\">" + (sanitizedHeader || "STORE INVENTORY ITEM") + "</text>" +
+        "<text x=\"" + (totalW / 2) + "\" y=\"" + (totalH - 10) + "\" font-family=\"sans-serif\" font-weight=\"bold\" font-size=\"14\" fill=\"" + (options.lineColor || "#059669") + "\" text-anchor=\"middle\">" + (sanitizedFooter || "PRICE: $99.99") + "</text>";
     } else if (isBadge) {
       // Modern badge ticket frame
       frameMarkup =
         "<rect width=\"" + totalW + "\" height=\"" + totalH + "\" fill=\"" + bgFill + "\" stroke=\"" + (options.lineColor || "#3b82f6") + "\" stroke-width=\"2\" stroke-dasharray=\"6 4\" rx=\"16\" />" +
         "<circle cx=\"0\" cy=\"" + (totalH / 2) + "\" r=\"10\" fill=\"#0f172a\" />" +
         "<circle cx=\"" + totalW + "\" cy=\"" + (totalH / 2) + "\" r=\"10\" fill=\"#0f172a\" />" +
-        "<text x=\"" + (totalW / 2) + "\" y=\"" + (headerH + 6) + "\" font-family=\"sans-serif\" font-size=\"11\" font-weight=\"bold\" fill=\"#64748b\" text-anchor=\"middle\" letter-spacing=\"2\">" + (options.headerText || "OFFICIAL VERIFICATION BADGE") + "</text>";
+        "<text x=\"" + (totalW / 2) + "\" y=\"" + (headerH + 6) + "\" font-family=\"sans-serif\" font-size=\"11\" font-weight=\"bold\" fill=\"#64748b\" text-anchor=\"middle\" letter-spacing=\"2\">" + (sanitizedHeader || "OFFICIAL VERIFICATION BADGE") + "</text>";
     }
 
     const barcodeG = "<g transform=\"translate(" + pad + ", " + (headerH + pad) + ")\">" + svgNode.innerHTML + "</g>";

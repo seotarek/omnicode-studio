@@ -1,0 +1,145 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OmniCode Studio REST API",
+    "description": "High-performance headless Barcode and QR Code generation, customization, and verification API.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "OmniCode Engineering Team",
+      "url": "https://omnicode.studio"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Returns status, version, and server timestamp.",
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
+      }
+    },
+    "/api/v1/qr/generate": {
+      "post": {
+        "summary": "Generate QR Code",
+        "description": "Renders vector SVG QR code with custom styles, colors, and error correction.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": { "type": "string", "example": "https://omnicode.studio" },
+                  "ecLevel": { "type": "string", "enum": ["L", "M", "Q", "H"], "default": "H" },
+                  "size": { "type": "integer", "default": 360 },
+                  "dotType": { "type": "string", "enum": ["square", "rounded", "dots", "classy", "extra-rounded", "diamond", "star"], "default": "rounded" },
+                  "fgColor": { "type": "string", "example": "#059669" },
+                  "bgColor": { "type": "string", "example": "#ffffff" },
+                  "isGradient": { "type": "boolean", "default": false },
+                  "logoUrl": { "type": "string", "example": "https://omnicode.studio/logo.png" }
+                },
+                "required": ["data"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated SVG QR Code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "format": { "type": "string" },
+                    "svg": { "type": "string" }
+                  }
+                }
+              },
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/barcode/generate": {
+      "post": {
+        "summary": "Generate Barcode",
+        "description": "Generates industrial standard barcodes with check digit verification and packaging frame styles.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "format": { "type": "string", "enum": ["CODE128", "EAN13", "EAN8", "UPC", "CODE39", "ITF14", "pharmacode"], "default": "CODE128" },
+                  "data": { "type": "string", "example": "4006381333931" },
+                  "style": { "type": "string", "enum": ["classic", "rounded", "pill", "gradient", "thermal-label", "price-tag", "badge-frame", "minimal"], "default": "classic" },
+                  "lineColor": { "type": "string", "default": "#000000" },
+                  "headerText": { "type": "string", "example": "AIR CARGO SHIPMENT" },
+                  "footerText": { "type": "string", "example": "CARRIER VERIFIED" }
+                },
+                "required": ["data"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated SVG Barcode"
+          },
+          "422": {
+            "description": "Validation or Check Digit Error"
+          }
+        }
+      }
+    },
+    "/api/v1/verify": {
+      "post": {
+        "summary": "Verify Code and Scannability",
+        "description": "Validates barcode check digits, characters, and QR optical contrast ratio.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "enum": ["qr", "barcode"] },
+                  "format": { "type": "string" },
+                  "data": { "type": "string" },
+                  "fgColor": { "type": "string" },
+                  "bgColor": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validation results"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 export interface ValidationResult {
+  disclaimer: string;
   score: number; // 0 to 100
   isScannable: boolean;
   contrastRatio: number;
@@ -6,7 +7,10 @@ export interface ValidationResult {
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const clean = hex.replace("#", "");
+  if (!hex || typeof hex !== "string") return null;
+  const clean = hex.trim().replace("#", "");
+  if (!/^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/.test(clean)) return null;
+
   if (clean.length === 3) {
     return {
       r: parseInt(clean[0] + clean[0], 16),
@@ -14,14 +18,11 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
       b: parseInt(clean[2] + clean[2], 16)
     };
   }
-  if (clean.length === 6) {
-    return {
-      r: parseInt(clean.substring(0, 2), 16),
-      g: parseInt(clean.substring(2, 4), 16),
-      b: parseInt(clean.substring(4, 6), 16)
-    };
-  }
-  return null;
+  return {
+    r: parseInt(clean.substring(0, 2), 16),
+    g: parseInt(clean.substring(2, 4), 16),
+    b: parseInt(clean.substring(4, 6), 16)
+  };
 }
 
 function getLuminance(r: number, g: number, b: number): number {
@@ -86,6 +87,7 @@ export function validateScannability(params: {
     score,
     isScannable: score >= 60 && contrast >= 2.5,
     contrastRatio: Number(contrast.toFixed(2)),
-    warnings
+    warnings,
+    disclaimer: "Scannability score is a heuristic estimation based on WCAG luminance contrast and damage ratio. It does not replace physical barcode scanner hardware certification."
   };
 }

@@ -1,3 +1,13 @@
+
+function sanitizeSvgText(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 import qrcode from "qrcode-generator";
 import {
   QRCodeOptions,
@@ -263,10 +273,16 @@ export class QRCodeRenderer {
       const bgRadius = this.options.logoOptions.borderRadius || 8;
       const bgColor = this.options.logoOptions.backgroundColor || "#ffffff";
 
+      // Validate safe image schema
+      const safeUrl = this.options.logoOptions.url.trim();
+      const isSafeProtocol = safeUrl.startsWith("data:image/") || safeUrl.startsWith("http://") || safeUrl.startsWith("https://") || safeUrl.startsWith("/");
+      if (!isSafeProtocol) {
+        throw new Error("Security Violation: Logo URL must use data:image/ or http(s) protocol");
+      }
       logoElement = `
         <g id="qr-logo-container">
           <rect x="${logoX - bgPad}" y="${logoY - bgPad}" width="${logoSize + bgPad * 2}" height="${logoSize + bgPad * 2}" rx="${bgRadius}" ry="${bgRadius}" fill="${bgColor}" />
-          <image href="${this.options.logoOptions.url}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" />
+          <image href="${sanitizeSvgText(safeUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" />
         </g>
       `;
     }

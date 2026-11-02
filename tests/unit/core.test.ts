@@ -4,6 +4,18 @@ import { calculateContrast, validateScannability } from "../../src/core/validato
 import { validateBarcodeData, generateBarcodeSVG } from "../../src/core/barcode/generator";
 import { QRCodeRenderer } from "../../src/core/qr/renderer";
 
+const setupMockDoc = () => {
+  const { JSDOM } = require("jsdom");
+  const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
+  // Mock canvas getContext for JsBarcode measureText in node/jsdom
+  dom.window.HTMLCanvasElement.prototype.getContext = () => ({
+    measureText: (text: string) => ({ width: text.length * 8 }),
+    font: ""
+  });
+  global.document = dom.window.document;
+  global.XMLSerializer = dom.window.XMLSerializer;
+};
+
 describe("Payload Encoders", () => {
   it("encodes WiFi WPA credentials correctly", () => {
     const res = encodeWifi({ ssid: "HomeNetwork", password: "Secret;Password", encryption: "WPA" });
@@ -75,19 +87,6 @@ describe("QRCodeRenderer", () => {
 });
 
   describe("Advanced Barcode Styles and Shapes", () => {
-
-    const setupMockDoc = () => {
-      const { JSDOM } = require("jsdom");
-      const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
-      // Mock canvas getContext for JsBarcode measureText in node/jsdom
-      dom.window.HTMLCanvasElement.prototype.getContext = () => ({
-        measureText: (text: string) => ({ width: text.length * 8 }),
-        font: ""
-      });
-      global.document = dom.window.document;
-      global.XMLSerializer = dom.window.XMLSerializer;
-    };
-
     it("renders barcode with rounded capsule style", () => {
       // Mock document for headless test
       setupMockDoc();
@@ -153,5 +152,66 @@ describe("QRCodeRenderer", () => {
       });
       const res = renderer.render();
       expect(res.svgString).toContain("polygon");
+    });
+  });
+
+  describe("GS1 Check Digit & Strict Barcode Verification", () => {
+    it("validates correct EAN-13 with calculated check digit", () => {
+      // 400638133393 + 1 (check digit) = 4006381333931
+      const valid = validateBarcodeData("EAN13", "4006381333931");
+      expect(valid.isValid).toBe(true);
+
+      const invalid = validateBarcodeData("EAN13", "4006381333939");
+      expect(invalid.isValid).toBe(false);
+      expect(invalid.error).toContain("Invalid EAN-13 check digit");
+    });
+
+    it("validates correct UPC-A check digit", () => {
+      // 01234567890 + 5 = 012345678905
+      const valid = validateBarcodeData("UPC", "012345678905");
+      expect(valid.isValid).toBe(true);
+
+      const invalid = validateBarcodeData("UPC", "012345678901");
+      expect(invalid.isValid).toBe(false);
+      expect(invalid.error).toContain("Invalid UPC-A check digit");
+    });
+
+    it("rejects non-numeric pharmacode", () => {
+      const invalid = validateBarcodeData("pharmacode", "12a34");
+      expect(invalid.isValid).toBe(false);
+      expect(invalid.error).toContain("numeric digits");
+    });
+  });
+
+  describe("Security and Injection Defense", () => {
+    it("sanitizes HTML/JS injection payloads in barcode labels", () => {
+      setupMockDoc();
+      const svg = generateBarcodeSVG({
+        format: "CODE128",
+        data: "PKG-SEC",
+        style: "thermal-label",
+        headerText: "<script>alert(1)</script>AIR CARGO"
+      });
+      expect(svg).not.toContain("<script>");
+      expect(svg).toContain("&lt;script&gt;");
+    });
+
+    it("blocks dangerous javascript: URI schemes in logo embeddings", () => {
+      const renderer = new QRCodeRenderer({
+        width: 300,
+        height: 300,
+        margin: 10,
+        data: "https://secure.example.com",
+        errorCorrectionLevel: "H",
+        dotsOptions: { type: "square", colorOrGradient: { color: "#000" } },
+        cornersSquareOptions: { type: "square", colorOrGradient: { color: "#000" } },
+        cornersDotOptions: { type: "square", colorOrGradient: { color: "#000" } },
+        backgroundOptions: { color: "#fff" },
+        logoOptions: {
+          url: "javascript:alert(document.domain)",
+          protectZone: true
+        }
+      });
+      expect(() => renderer.render()).toThrow("Security Violation");
     });
   });
