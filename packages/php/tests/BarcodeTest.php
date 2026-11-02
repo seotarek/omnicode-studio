@@ -54,4 +54,43 @@ class BarcodeTest extends TestCase
         $this->assertStringContainsString('CARRIER VERIFIED', $svg);
         $this->assertStringNotContainsString('<CENTER>', $svg); // Escaped
     }
+
+    public function testMsiValidationAndSvg(): void
+    {
+        $valid = BarcodeGenerator::validate('MSI', '1234567890');
+        $this->assertTrue($valid['isValid']);
+
+        $invalid = BarcodeGenerator::validate('MSI', '12345ABC');
+        $this->assertFalse($invalid['isValid']);
+        $this->assertStringContainsString('only numeric digits', $invalid['error']);
+
+        $svg = BarcodeGenerator::generateSvg([
+            'format' => 'MSI',
+            'data' => '987654321',
+            'style' => 'badge-frame'
+        ]);
+        $this->assertStringContainsString('<svg', $svg);
+        $this->assertStringContainsString('rect', $svg);
+    }
+
+    public function testCodabarValidationAndSvg(): void
+    {
+        $valid = BarcodeGenerator::validate('CODABAR', 'A12345B');
+        $this->assertTrue($valid['isValid']);
+
+        $autoWrapped = BarcodeGenerator::validate('CODABAR', '12345-678');
+        $this->assertTrue($autoWrapped['isValid']);
+
+        $invalid = BarcodeGenerator::validate('CODABAR', 'A123X45B');
+        $this->assertFalse($invalid['isValid']);
+
+        $svg = BarcodeGenerator::generateSvg([
+            'format' => 'CODABAR',
+            'data' => 'A54321B',
+            'style' => 'classic'
+        ]);
+        $this->assertStringContainsString('<svg', $svg);
+        $this->assertStringContainsString('rect', $svg);
+    }
 }
+

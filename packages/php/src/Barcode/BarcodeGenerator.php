@@ -108,6 +108,23 @@ class BarcodeGenerator
                 }
                 return ['isValid' => true, 'error' => null];
 
+            case 'MSI':
+            case 'PLESSEY':
+                if (!preg_match('/^\d+$/', $clean)) {
+                    return ['isValid' => false, 'error' => 'MSI must contain only numeric digits.'];
+                }
+                return ['isValid' => true, 'error' => null];
+
+            case 'CODABAR':
+            case 'NW7':
+                if (!preg_match('/^[A-D]?[0-9\-\$\:\/\.\+]+[A-D]?$/i', $clean)) {
+                    return [
+                        'isValid' => false,
+                        'error' => 'Codabar contains invalid characters. Use 0-9, -, $, :, /, ., +, and optional start/stop A, B, C, or D.'
+                    ];
+                }
+                return ['isValid' => true, 'error' => null];
+
             default:
                 return ['isValid' => true, 'error' => null];
         }
@@ -192,6 +209,59 @@ class BarcodeGenerator
     }
 
     /**
+     * Generates an MSI / Plessey binary bit sequence.
+     */
+    private static function encodeMsi(string $data): string
+    {
+        $clean = trim($data);
+        $binary = '110'; // Start pattern
+
+        for ($i = 0, $len = strlen($clean); $i < $len; $i++) {
+            $digit = (int)$clean[$i];
+            $bin = str_pad(decbin($digit), 4, '0', STR_PAD_LEFT);
+            for ($b = 0; $b < 4; $b++) {
+                $binary .= ($bin[$b] === '0') ? '100' : '110';
+            }
+        }
+
+        $binary .= '1001'; // Stop pattern
+        return $binary;
+    }
+
+    /**
+     * Generates a Codabar / NW-7 binary bit sequence.
+     */
+    private static function encodeCodabar(string $data): string
+    {
+        $clean = strtoupper(trim($data));
+        // Auto-wrap with start/stop A if not present
+        if (!preg_match('/^[A-D]/', $clean)) {
+            $clean = 'A' . $clean . 'A';
+        }
+
+        $patterns = [
+            '0' => '101010011', '1' => '101011001', '2' => '101001011', '3' => '110010101',
+            '4' => '101101001', '5' => '110101001', '6' => '100101011', '7' => '100101101',
+            '8' => '100110101', '9' => '110100101', '-' => '101001101', '$' => '101100101',
+            ':' => '1101011011', '/' => '1101101011', '.' => '1101101101', '+' => '1011011011',
+            'A' => '1011001001', 'B' => '1001001011', 'C' => '1010010011', 'D' => '1010011001'
+        ];
+
+        $binary = '';
+        $len = strlen($clean);
+        for ($i = 0; $i < $len; $i++) {
+            $char = $clean[$i];
+            if (isset($patterns[$char])) {
+                $binary .= $patterns[$char];
+                if ($i !== $len - 1) {
+                    $binary .= '0'; // Inter-character narrow space
+                }
+            }
+        }
+        return $binary;
+    }
+
+    /**
      * Generates a fully-rendered vector SVG barcode string.
      *
      * @param array{
@@ -213,7 +283,6 @@ class BarcodeGenerator
         $format = strtoupper($options['format'] ?? 'CODE128');
         $data = $options['data'] ?? '';
         $style = $options['style'] ?? 'classic';
-
         $barWidth = (int)($options['width'] ?? 2);
         if ($barWidth < 1 || $barWidth > 10) {
             throw new InvalidArgumentException("Barcode width must be between 1 and 10.");
@@ -240,9 +309,12 @@ class BarcodeGenerator
         }
 
         // Get binary sequence
-        $binary = ($format === 'CODE39')
-            ? self::encodeCode39($data)
-            : self::encodeCode128($data);
+        $binary = match ($format) {
+            'CODE39' => self::encodeCode39($data),
+            'MSI', 'PLESSEY' => self::encodeMsi($data),
+            'CODABAR', 'NW7' => self::encodeCodabar($data),
+            default => self::encodeCode128($data)
+        };
 
         $binLen = strlen($binary);
         $coreWidth = $binLen * $barWidth;

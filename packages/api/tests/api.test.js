@@ -3,11 +3,23 @@ import request from "supertest";
 import { app } from "../src/app.js";
 
 describe("OmniCode REST API Integration Suite", () => {
-  it("GET /health returns healthy status", async () => {
+  it("GET /health returns healthy status with OWASP security headers", async () => {
     const res = await request(app).get("/health");
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("ok");
     expect(res.body.service).toBe("OmniCode Studio REST API");
+    expect(res.headers["x-content-type-options"]).toBe("nosniff");
+    expect(res.headers["x-frame-options"]).toBe("DENY");
+    expect(res.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  });
+
+  it("GET /metrics returns live telemetry and runtime stats", async () => {
+    const res = await request(app).get("/metrics");
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("ok");
+    expect(res.body.uptimeSeconds).toBeGreaterThanOrEqual(0);
+    expect(res.body.memory.rssMb).toBeGreaterThan(0);
+    expect(res.body.nodeVersion).toBeDefined();
   });
 
   it("GET /api/v1/spec returns valid OpenAPI spec", async () => {
@@ -74,6 +86,34 @@ describe("OmniCode REST API Integration Suite", () => {
     expect(res.status).toBe(422);
     expect(res.body.success).toBe(false);
     expect(res.body.error).toContain("Invalid EAN-13 check digit");
+  });
+
+  it("POST /api/v1/barcode/generate creates valid MSI barcode", async () => {
+    const res = await request(app)
+      .post("/api/v1/barcode/generate")
+      .send({
+        format: "MSI",
+        data: "1234567890",
+        style: "minimal"
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.svg).toContain("<svg");
+  });
+
+  it("POST /api/v1/barcode/generate creates valid Codabar barcode", async () => {
+    const res = await request(app)
+      .post("/api/v1/barcode/generate")
+      .send({
+        format: "codabar",
+        data: "A12345B",
+        style: "classic"
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.svg).toContain("<svg");
   });
 
   it("POST /api/v1/verify checks barcode check digit and optical contrast", async () => {

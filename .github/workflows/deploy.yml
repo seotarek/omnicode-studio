@@ -107,6 +107,7 @@ jobs:
       - name: Test Laravel Package
         run: |
           cd packages/laravel
+          composer config repositories.local '{"type": "path", "url": "../php", "options": {"versions": {"omnicode/omnicode-php": "1.0.0"}}}'
           composer install --no-interaction --prefer-dist
           ./vendor/bin/phpunit
 
@@ -120,11 +121,55 @@ jobs:
       - name: Build API Docker Image
         run: docker build -t omnicode-api -f packages/api/Dockerfile .
 
-      - name: Run Container and Verify Health Endpoint
+      - name: Run Container and Verify End-to-End Code Generation
         run: |
-          docker run -d --name api-smoke -p 8080:8080 omnicode-api
+          docker run -d --name api-smoke -p 8080:8080 -e API_KEY=docker-smoke-secret omnicode-api
           sleep 4
-          curl --fail http://localhost:8080/health || (docker logs api-smoke && exit 1)
+
+          # 1. Health & Security Headers
+          curl --fail -i http://localhost:8080/health | grep -i "x-content-type-options: nosniff" || (docker logs api-smoke && exit 1)
+
+          # 2. Telemetry & Metrics
+          curl --fail http://localhost:8080/metrics | grep '"status":"ok"' || (docker logs api-smoke && exit 1)
+
+          # 3. QR Code Generation
+          QR_RES=$(curl -s -X POST http://localhost:8080/api/v1/qr/generate \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: docker-smoke-secret" \
+            -d '{"data":"https://omnicode.studio/docker-verified","ecLevel":"H","dotType":"rounded"}')
+          echo "$QR_RES" | grep '"success":true' || (echo "QR generation failed: $QR_RES" && docker logs api-smoke && exit 1)
+
+          # 4. Barcode CODE128 Generation
+          BC_RES=$(curl -s -X POST http://localhost:8080/api/v1/barcode/generate \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: docker-smoke-secret" \
+            -d '{"format":"CODE128","data":"CONTAINER-TEST-99","style":"thermal-label"}')
+          echo "$BC_RES" | grep '"success":true' || (echo "Barcode Code128 failed: $BC_RES" && docker logs api-smoke && exit 1)
+
+          # 5. Barcode MSI Generation
+          MSI_RES=$(curl -s -X POST http://localhost:8080/api/v1/barcode/generate \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: docker-smoke-secret" \
+            -d '{"format":"MSI","data":"1234567890","style":"minimal"}')
+          echo "$MSI_RES" | grep '"success":true' || (echo "Barcode MSI failed: $MSI_RES" && docker logs api-smoke && exit 1)
+
+          # 6. Barcode Codabar Generation
+          CB_RES=$(curl -s -X POST http://localhost:8080/api/v1/barcode/generate \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: docker-smoke-secret" \
+            -d '{"format":"codabar","data":"A98765B","style":"classic"}')
+          echo "$CB_RES" | grep '"success":true' || (echo "Barcode Codabar failed: $CB_RES" && docker logs api-smoke && exit 1)
+
+          # 7. API Key Protection Verification
+          UNAUTH_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/api/v1/qr/generate \
+            -H "Content-Type: application/json" \
+            -d '{"data":"test"}')
+          if [ "$UNAUTH_HTTP" != "401" ]; then
+            echo "Expected HTTP 401 for unauthenticated request, got $UNAUTH_HTTP"
+            docker logs api-smoke
+            exit 1
+          fi
+
           docker stop api-smoke
 
   deploy-pages:

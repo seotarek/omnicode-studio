@@ -1,0 +1,32 @@
+{
+  "name": "omnicode/monorepo",
+  "description": "OmniCode Studio Global Monorepo Workspace",
+  "type": "project",
+  "license": "MIT",
+  "repositories": [
+    {
+      "type": "path",
+      "url": "packages/php",
+      "options": {
+        "versions": {
+          "omnicode/omnicode-php": "1.0.0"
+        }
+      }
+    },
+    {
+      "type": "path",
+      "url": "packages/laravel",
+      "options": {
+        "versions": {
+          "omnicode/laravel-omnicode": "1.0.0"
+        }
+      }
+    }
+  ],
+  "require-dev": {
+    "omnicode/omnicode-php": "^1.0",
+    "omnicode/laravel-omnicode": "^1.0"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

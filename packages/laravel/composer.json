@@ -9,20 +9,9 @@
       "email": "engineering@omnicode.studio"
     }
   ],
-  "repositories": [
-    {
-      "type": "path",
-      "url": "../php",
-      "options": {
-        "versions": {
-          "omnicode/omnicode-php": "1.0.0"
-        }
-      }
-    }
-  ],
   "require": {
-    "php": "^8.1 || ^8.2 || ^8.3 || ^8.4 || ^8.5",
-    "omnicode/omnicode-php": "^1.0 || *",
+    "php": "^8.2 || ^8.3 || ^8.4 || ^8.5",
+    "omnicode/omnicode-php": "^1.0",
     "illuminate/support": "^10.0 || ^11.0",
     "illuminate/view": "^10.0 || ^11.0",
     "illuminate/filesystem": "^10.0 || ^11.0"

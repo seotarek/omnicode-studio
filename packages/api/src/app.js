@@ -3,7 +3,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { isProhibitedUrl, createRateLimiter, apiKeyAuth } from "./security.js";
+import { isProhibitedUrl, createRateLimiter, apiKeyAuth, securityHeaders } from "./security.js";
 
 // Load core engine from @omnicode/core dist
 import {
@@ -17,14 +17,27 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const startTime = Date.now();
 
 export const app = express();
 
-// Configurable CORS
+// Security Defense-in-depth headers
+app.use(securityHeaders);
+
+// Configurable CORS with strict origin validation
 const corsOrigin = process.env.CORS_ORIGIN || "*";
 app.use(
   cors({
-    origin: corsOrigin === "*" ? "*" : corsOrigin.split(",").map((s) => s.trim()),
+    origin: (origin, callback) => {
+      if (!origin || corsOrigin === "*") {
+        return callback(null, true);
+      }
+      const allowed = corsOrigin.split(",").map((s) => s.trim().toLowerCase());
+      if (allowed.includes(origin.toLowerCase())) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS policy violation: Origin not allowed"), false);
+    },
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Accept", "x-api-key", "Authorization"]
   })
@@ -33,14 +46,14 @@ app.use(
 // Body parser
 app.use(express.json({ limit: "5mb" }));
 
-// In-memory Rate Limiting (100 req / 15 min default per IP, bypassed for /health and /api/v1/spec)
+// Rate Limiting (100 req / 15 min default per IP, bypassed for /health, /metrics, and /api/v1/spec)
 const rateLimiter = createRateLimiter({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max: Number(process.env.RATE_LIMIT_MAX) || 100
 });
 app.use(rateLimiter);
 
-// Optional API Key Authentication
+// API Key Authentication (enforced when API_KEY is set or API_KEY_REQUIRED is true)
 app.use(apiKeyAuth);
 
 // Health Check
@@ -50,6 +63,22 @@ app.get("/health", (req, res) => {
     service: "OmniCode Studio REST API",
     version: "1.0.0",
     timestamp: new Date().toISOString()
+  });
+});
+
+// Telemetry & Metrics endpoint
+app.get("/metrics", (req, res) => {
+  const memory = process.memoryUsage();
+  res.json({
+    status: "ok",
+    uptimeSeconds: Math.floor((Date.now() - startTime) / 1000),
+    memory: {
+      rssMb: Number((memory.rss / 1024 / 1024).toFixed(2)),
+      heapUsedMb: Number((memory.heapUsed / 1024 / 1024).toFixed(2)),
+      heapTotalMb: Number((memory.heapTotal / 1024 / 1024).toFixed(2))
+    },
+    nodeVersion: process.version,
+    pid: process.pid
   });
 });
 

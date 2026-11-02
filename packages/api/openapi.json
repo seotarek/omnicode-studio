@@ -91,7 +91,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "format": { "type": "string", "enum": ["CODE128", "EAN13", "EAN8", "UPC", "CODE39", "ITF14", "pharmacode"], "default": "CODE128" },
+                  "format": { "type": "string", "enum": ["CODE128", "EAN13", "EAN8", "UPC", "CODE39", "ITF14", "pharmacode", "MSI", "codabar"], "default": "CODE128" },
                   "data": { "type": "string", "example": "4006381333931" },
                   "style": { "type": "string", "enum": ["classic", "rounded", "pill", "gradient", "thermal-label", "price-tag", "badge-frame", "minimal"], "default": "classic" },
                   "lineColor": { "type": "string", "default": "#000000" },
@@ -125,7 +125,7 @@
                 "type": "object",
                 "properties": {
                   "type": { "type": "string", "enum": ["qr", "barcode"] },
-                  "format": { "type": "string" },
+                  "format": { "type": "string", "enum": ["CODE128", "EAN13", "EAN8", "UPC", "CODE39", "ITF14", "pharmacode", "MSI", "codabar"] },
                   "data": { "type": "string" },
                   "fgColor": { "type": "string" },
                   "bgColor": { "type": "string" }

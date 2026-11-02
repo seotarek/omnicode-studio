@@ -78,42 +78,70 @@ export function isProhibitedUrl(urlString) {
 }
 
 /**
- * Creates an in-memory rate limiter middleware with sliding/fixed window counter.
+ * Security headers middleware enforcing OWASP defense-in-depth headers.
+ */
+export function securityHeaders(req, res, next) {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+}
+
+/**
+ * In-memory store for rate limiting with sliding reset windows.
+ */
+export class MemoryRateLimitStore {
+  constructor(windowMs) {
+    this.requests = new Map();
+    this.interval = setInterval(() => {
+      const now = Date.now();
+      for (const [key, data] of this.requests.entries()) {
+        if (now > data.resetTime) {
+          this.requests.delete(key);
+        }
+      }
+    }, Math.min(windowMs, 60000));
+    if (this.interval.unref) this.interval.unref();
+  }
+
+  async increment(key, windowMs) {
+    const now = Date.now();
+    let record = this.requests.get(key);
+    if (!record || now > record.resetTime) {
+      record = { count: 1, resetTime: now + windowMs };
+      this.requests.set(key, record);
+    } else {
+      record.count++;
+    }
+    return record;
+  }
+}
+
+/**
+ * Creates a rate limiter middleware with pluggable store support (memory or distributed).
  */
 export function createRateLimiter({
   windowMs = 15 * 60 * 1000,
   max = 100,
+  store = null,
   message = "Too many requests. Please try again later."
 } = {}) {
-  const requests = new Map();
+  const activeStore = store || new MemoryRateLimitStore(windowMs);
 
-  const interval = setInterval(() => {
-    const now = Date.now();
-    for (const [ip, data] of requests.entries()) {
-      if (now > data.resetTime) {
-        requests.delete(ip);
-      }
-    }
-  }, Math.min(windowMs, 60000));
-  if (interval.unref) interval.unref();
-
-  return function rateLimitMiddleware(req, res, next) {
-    // Bypass health and spec endpoints
-    if (req.path === "/health" || req.path === "/api/v1/spec") {
+  return async function rateLimitMiddleware(req, res, next) {
+    // Bypass health, metrics, and spec endpoints
+    if (req.path === "/health" || req.path === "/metrics" || req.path === "/api/v1/spec") {
       return next();
     }
 
     const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
     const now = Date.now();
 
-    let record = requests.get(ip);
-    if (!record || now > record.resetTime) {
-      record = { count: 1, resetTime: now + windowMs };
-      requests.set(ip, record);
-    } else {
-      record.count++;
-    }
-
+    const record = await activeStore.increment(ip, windowMs);
     const remaining = Math.max(0, max - record.count);
     const resetSeconds = Math.ceil(record.resetTime / 1000);
     const retryAfter = Math.ceil((record.resetTime - now) / 1000);
@@ -135,17 +163,19 @@ export function createRateLimiter({
 }
 
 /**
- * Optional API key authentication middleware.
- * If process.env.API_KEY is defined and non-empty, requests must provide matching
- * 'x-api-key' or 'Authorization: Bearer <key>' headers.
+ * API key authentication middleware.
+ * Enforces authentication if process.env.API_KEY is configured OR process.env.API_KEY_REQUIRED === "true".
+ * Requests must provide matching 'x-api-key' or 'Authorization: Bearer <key>' headers.
  */
 export function apiKeyAuth(req, res, next) {
-  if (req.path === "/health" || req.path === "/api/v1/spec") {
+  if (req.path === "/health" || req.path === "/metrics" || req.path === "/api/v1/spec") {
     return next();
   }
 
   const expectedKey = process.env.API_KEY;
-  if (!expectedKey) {
+  const isRequired = process.env.API_KEY_REQUIRED === "true" || (Boolean(expectedKey) && expectedKey.trim().length > 0);
+
+  if (!isRequired) {
     return next();
   }
 
@@ -166,3 +196,4 @@ export function apiKeyAuth(req, res, next) {
 
   next();
 }
+
