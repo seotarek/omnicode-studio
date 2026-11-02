@@ -7,7 +7,7 @@ COPY packages/api ./packages/api
 
 # Build core package
 WORKDIR /app/packages/core
-RUN npm install && npm run build
+RUN npm install && npm run build && npm prune --omit=dev
 
 # Install API dependencies
 WORKDIR /app/packages/api
@@ -20,8 +20,7 @@ ENV NODE_ENV=production
 ENV PORT=8080
 ENV HOST=0.0.0.0
 
-COPY --from=builder /app/packages/core/dist ./packages/core/dist
-COPY --from=builder /app/packages/core/package.json ./packages/core/package.json
+COPY --from=builder /app/packages/core ./packages/core
 COPY --from=builder /app/packages/api ./packages/api
 
 WORKDIR /app/packages/api

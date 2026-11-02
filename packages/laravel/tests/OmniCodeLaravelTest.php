@@ -42,14 +42,44 @@ class OmniCodeLaravelTest extends TestCase
 
         $this->manager = new OmniCodeManager($this->defaultConfig);
 
-        // Bind mock app container to Facade
-        $app = [
-            'omnicode' => $this->manager,
-            'config' => [
-                'omnicode' => $this->defaultConfig
-            ]
-        ];
-        Facade::setFacadeApplication($app);
+        // Bind mock app container to Facade and Storage
+        $storageDriver = new class {
+            public array $files = [];
+            public function put(string $path, string $contents): bool {
+                $this->files[$path] = $contents;
+                return true;
+            }
+            public function get(string $path): ?string {
+                return $this->files[$path] ?? null;
+            }
+        };
+
+        $filesystem = new class($storageDriver) {
+            private $driver;
+            public function __construct($driver) { $this->driver = $driver; }
+            public function disk(?string $name = null) { return $this->driver; }
+        };
+
+        if (class_exists(\Illuminate\Container\Container::class)) {
+            $container = new \Illuminate\Container\Container();
+            $container->instance('omnicode', $this->manager);
+            $container->instance('config', ['omnicode' => $this->defaultConfig]);
+            $container->instance('filesystem', $filesystem);
+            Facade::setFacadeApplication($container);
+        } else {
+            $app = [
+                'omnicode' => $this->manager,
+                'config' => [
+                    'omnicode' => $this->defaultConfig
+                ],
+                'filesystem' => $filesystem
+            ];
+            Facade::setFacadeApplication($app);
+        }
+
+        if (method_exists(Storage::class, 'swap')) {
+            Storage::swap($filesystem);
+        }
     }
 
     public function testManagerGeneratesValidQrSvg(): void

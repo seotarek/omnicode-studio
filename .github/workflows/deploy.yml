@@ -34,10 +34,7 @@ jobs:
         run: npm ci
 
       - name: Build Core Package
-        run: |
-          cd packages/core
-          npm ci
-          npm run build
+        run: npx tsc -p packages/core/tsconfig.json
 
       - name: Run Studio & Core Test Suite
         run: npm test
@@ -66,12 +63,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+
+      - name: Install Root Dependencies
+        run: npm ci
 
       - name: Build Core Dependency
-        run: |
-          cd packages/core
-          npm ci
-          npm run build
+        run: npx tsc -p packages/core/tsconfig.json
 
       - name: Install API Dependencies
         run: |

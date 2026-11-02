@@ -52,6 +52,10 @@ if (!class_exists(\Illuminate\Support\Facades\Storage::class)) {
                     }
                 };
             }
+
+            public static function swap($instance): void
+            {
+            }
         }
     ');
 }
