@@ -6,10 +6,14 @@ export type DotType =
   | 'dots'
   | 'classy'
   | 'classy-rounded'
-  | 'extra-rounded';
+  | 'extra-rounded'
+  | 'diamond'
+  | 'star'
+  | 'horizontal-bars'
+  | 'vertical-bars';
 
-export type CornerSquareType = 'square' | 'rounded' | 'extra-rounded' | 'dot';
-export type CornerDotType = 'square' | 'dot' | 'rounded';
+export type CornerSquareType = 'square' | 'rounded' | 'extra-rounded' | 'dot' | 'leaf' | 'diamond';
+export type CornerDotType = 'square' | 'dot' | 'rounded' | 'diamond' | 'star';
 
 export interface GradientOptions {
   type: 'linear' | 'radial';

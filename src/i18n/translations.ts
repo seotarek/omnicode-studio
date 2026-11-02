@@ -33,6 +33,17 @@ export interface Translations {
   batchDownloadZip: string;
   historyTitle: string;
   clearHistory: string;
+  barcodeStyle: string;
+  barcodeStyleClassic: string;
+  barcodeStyleRounded: string;
+  barcodeStylePill: string;
+  barcodeStyleGradient: string;
+  barcodeStyleBadge: string;
+  barcodeStyleMinimal: string;
+  barcodeStyleThermal: string;
+  barcodeStylePriceTag: string;
+  headerLabel: string;
+  footerLabel: string;
 }
 
 export const translations: Record<"en" | "ar", Translations> = {
@@ -70,7 +81,18 @@ export const translations: Record<"en" | "ar", Translations> = {
     batchUploadBtn: "Select CSV File",
     batchDownloadZip: "Export All as ZIP Bundle",
     historyTitle: "Recent Generations (Local)",
-    clearHistory: "Clear History"
+    clearHistory: "Clear History",
+    barcodeStyle: "Barcode Visual Presentation Style",
+    barcodeStyleClassic: "Standard Rectangle (Industrial)",
+    barcodeStyleRounded: "Modern Rounded Bars",
+    barcodeStylePill: "Full Pill Capsule Bars",
+    barcodeStyleGradient: "Two-Tone Gradient Bars",
+    barcodeStyleBadge: "Verification Badge Frame",
+    barcodeStyleMinimal: "Minimalist Typography",
+    barcodeStyleThermal: "Thermal Warehouse Shipping Label",
+    barcodeStylePriceTag: "Retail Shelf Price Tag",
+    headerLabel: "Header Banner Text",
+    footerLabel: "Footer Note / Subtext"
   },
   ar: {
     title: "أومني كود ستوديو",
@@ -106,6 +128,17 @@ export const translations: Record<"en" | "ar", Translations> = {
     batchUploadBtn: "اختيار ملف CSV",
     batchDownloadZip: "تحميل كافة الأكواد في ملف ZIP",
     historyTitle: "السجل المحلي الأخير",
-    clearHistory: "مسح السجل"
+    clearHistory: "مسح السجل",
+    barcodeStyle: "شكل ونمط تصميم الباركود",
+    barcodeStyleClassic: "مستطيل قياسي (صناعي وطباعة)",
+    barcodeStyleRounded: "أعمدة دائرية الحواف (عصري)",
+    barcodeStylePill: "أعمدة كبسولية ناعمة (Pill)",
+    barcodeStyleGradient: "تدرج لوني انسيابي (Gradient)",
+    barcodeStyleBadge: "إطار تذكرة واعتماد (Badge)",
+    barcodeStyleMinimal: "تصميم أنيق بسيط (Minimal)",
+    barcodeStyleThermal: "ملصق بوليصة شحن حرارية للمستودعات",
+    barcodeStylePriceTag: "بطاقة سعر وتجزئة للمتاجر (Shelf Tag)",
+    headerLabel: "نص الترويسة / العنوان العلوي",
+    footerLabel: "نص التذييل / الملاحظة السفلية"
   }
 };

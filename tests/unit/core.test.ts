@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { encodeWifi, encodeVCard, encodeWhatsApp } from "../../src/core/payloads/encoders";
 import { calculateContrast, validateScannability } from "../../src/core/validator/scannability";
-import { validateBarcodeData } from "../../src/core/barcode/generator";
+import { validateBarcodeData, generateBarcodeSVG } from "../../src/core/barcode/generator";
 import { QRCodeRenderer } from "../../src/core/qr/renderer";
 
 describe("Payload Encoders", () => {
@@ -73,3 +73,85 @@ describe("QRCodeRenderer", () => {
     expect(result.moduleCount).toBeGreaterThan(20);
   });
 });
+
+  describe("Advanced Barcode Styles and Shapes", () => {
+
+    const setupMockDoc = () => {
+      const { JSDOM } = require("jsdom");
+      const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
+      // Mock canvas getContext for JsBarcode measureText in node/jsdom
+      dom.window.HTMLCanvasElement.prototype.getContext = () => ({
+        measureText: (text: string) => ({ width: text.length * 8 }),
+        font: ""
+      });
+      global.document = dom.window.document;
+      global.XMLSerializer = dom.window.XMLSerializer;
+    };
+
+    it("renders barcode with rounded capsule style", () => {
+      // Mock document for headless test
+      setupMockDoc();
+
+      const svg = generateBarcodeSVG({
+        format: "CODE128",
+        data: "TEST-ROUNDED",
+        style: "rounded"
+      });
+      expect(svg).toContain("<svg");
+      expect(svg).toContain("rx=\"2\"");
+    });
+
+    it("renders thermal warehouse label frame", () => {
+      setupMockDoc();
+
+      const svg = generateBarcodeSVG({
+        format: "CODE128",
+        data: "PKG-9942",
+        style: "thermal-label",
+        headerText: "WAREHOUSE AIR SHIPMENT"
+      });
+      expect(svg).toContain("WAREHOUSE AIR SHIPMENT");
+      expect(svg).toContain("CARRIER APPROVED");
+    });
+
+    it("renders retail price tag frame", () => {
+      setupMockDoc();
+
+      const svg = generateBarcodeSVG({
+        format: "EAN13",
+        data: "1234567890128",
+        style: "price-tag",
+        headerText: "SPECIAL PROMO",
+        footerText: "PRICE: $19.99"
+      });
+      expect(svg).toContain("SPECIAL PROMO");
+      expect(svg).toContain("PRICE: $19.99");
+    });
+  });
+
+  describe("New QR Code Shapes", () => {
+    it("renders diamond and star dot topologies", () => {
+      const renderer = new QRCodeRenderer({
+        width: 300,
+        height: 300,
+        margin: 10,
+        data: "https://test.shape",
+        errorCorrectionLevel: "M",
+        dotsOptions: {
+          type: "diamond",
+          colorOrGradient: { color: "#000000" }
+        },
+        cornersSquareOptions: {
+          type: "leaf",
+          colorOrGradient: { color: "#000000" }
+        },
+        cornersDotOptions: {
+          type: "star",
+          colorOrGradient: { color: "#000000" }
+        },
+        backgroundOptions: { color: "#ffffff" }
+      });
+      const res = renderer.render();
+      expect(res.svgString).toContain("polygon");
+    });
+  });
