@@ -8,6 +8,11 @@
 
 Client-side vector barcode and QR code generation suite. Engineered for logistics, enterprise applications, and developers requiring zero external network requests, precise SVG vector output, automated scannability verification, and full bilingual support (English and Arabic).
 
+
+<div align="center">
+  <img src="./docs/assets/studio-preview.png" alt="OmniCode Studio Interface Preview" width="100%" />
+</div>
+
 ---
 
 ## Live Application
