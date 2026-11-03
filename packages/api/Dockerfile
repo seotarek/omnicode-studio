@@ -16,6 +16,10 @@ RUN npm install --omit=dev
 FROM node:22-alpine AS runner
 WORKDIR /app
 
+LABEL org.opencontainers.image.source="https://github.com/seotarek/omnicode-studio"
+LABEL org.opencontainers.image.description="Enterprise Barcode & QR REST API Microservice"
+LABEL org.opencontainers.image.licenses="MIT"
+
 ENV NODE_ENV=production
 ENV PORT=8080
 ENV HOST=0.0.0.0
