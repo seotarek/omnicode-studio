@@ -1,6 +1,6 @@
-import React from "react";
-import { Barcode, Sparkles, Palette, ShieldAlert } from "lucide-react";
-import { BarcodeFormat, BarcodeStyle } from "../../core/barcode/generator";
+import React, { useMemo } from "react";
+import { Barcode, Sparkles, Palette, ShieldAlert, CheckCircle } from "lucide-react";
+import { BarcodeFormat, BarcodeStyle, calculateMod10CheckDigit } from "../../core/barcode/generator";
 import { Translations } from "../../i18n/translations";
 
 interface BarcodeFormProps {
@@ -48,6 +48,31 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
   barcodeValidation,
   t
 }) => {
+  const suggestedCheck = useMemo(() => {
+    const clean = barcodeData.trim().replace(/\D/g, "");
+    if (barcodeFormat === "EAN13" && (clean.length === 12 || clean.length === 13)) {
+      const payload = clean.slice(0, 12);
+      const expected = calculateMod10CheckDigit(payload);
+      return { payload, expected, full: `${payload}${expected}` };
+    }
+    if (barcodeFormat === "EAN8" && (clean.length === 7 || clean.length === 8)) {
+      const payload = clean.slice(0, 7);
+      const expected = calculateMod10CheckDigit(payload);
+      return { payload, expected, full: `${payload}${expected}` };
+    }
+    if (barcodeFormat === "UPC" && (clean.length === 11 || clean.length === 12)) {
+      const payload = clean.slice(0, 11);
+      const expected = calculateMod10CheckDigit(payload);
+      return { payload, expected, full: `${payload}${expected}` };
+    }
+    if (barcodeFormat === "ITF14" && (clean.length === 13 || clean.length === 14)) {
+      const payload = clean.slice(0, 13);
+      const expected = calculateMod10CheckDigit(payload);
+      return { payload, expected, full: `${payload}${expected}` };
+    }
+    return null;
+  }, [barcodeFormat, barcodeData]);
+
   return (
     <div className="space-y-5">
       {/* Presets & Style Selection */}
@@ -111,7 +136,19 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
             </div>
 
             <div>
-              <label className="text-xs font-medium text-slate-500 block mb-1.5">{t.barcodeData}</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-medium text-slate-500">{t.barcodeData}</label>
+                {suggestedCheck && !barcodeValidation.isValid && (
+                  <button
+                    type="button"
+                    onClick={() => setBarcodeData(suggestedCheck.full)}
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
+                  >
+                    <CheckCircle className="w-3 h-3 text-emerald-600" />
+                    {t.autoFixCheckDigit} ({suggestedCheck.expected})
+                  </button>
+                )}
+              </div>
               <input
                 type="text"
                 value={barcodeData}
@@ -122,9 +159,21 @@ export const BarcodeForm: React.FC<BarcodeFormProps> = ({
           </div>
 
           {!barcodeValidation.isValid && (
-            <div className="text-xs text-red-700 flex items-center gap-1.5 p-2.5 rounded-xl bg-red-50 border border-red-200">
-              <ShieldAlert className="w-4 h-4 shrink-0 text-red-600" />
-              <span>{barcodeValidation.error}</span>
+            <div className="text-xs text-red-700 flex items-center justify-between gap-1.5 p-2.5 rounded-xl bg-red-50 border border-red-200">
+              <div className="flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{barcodeValidation.error}</span>
+              </div>
+              {suggestedCheck && (
+                <button
+                  type="button"
+                  onClick={() => setBarcodeData(suggestedCheck.full)}
+                  className="shrink-0 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-sm transition-all flex items-center gap-1"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  {t.autoFixCheckDigit} ({suggestedCheck.expected})
+                </button>
+              )}
             </div>
           )}
 

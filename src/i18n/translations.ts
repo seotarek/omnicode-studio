@@ -44,6 +44,14 @@ export interface Translations {
   barcodeStylePriceTag: string;
   headerLabel: string;
   footerLabel: string;
+  enterpriseStandards: string;
+  payloadModeText: string;
+  payloadModeGs1: string;
+  payloadModeZatca: string;
+  payloadModeEpc: string;
+  payloadModeWifi: string;
+  payloadModeVcard: string;
+  autoFixCheckDigit: string;
 }
 
 export const translations: Record<"en" | "ar", Translations> = {
@@ -92,7 +100,15 @@ export const translations: Record<"en" | "ar", Translations> = {
     barcodeStyleThermal: "Thermal Warehouse Shipping Label",
     barcodeStylePriceTag: "Retail Shelf Price Tag",
     headerLabel: "Header Banner Text",
-    footerLabel: "Footer Note / Subtext"
+    footerLabel: "Footer Note / Subtext",
+    enterpriseStandards: "Enterprise Payload Standards",
+    payloadModeText: "URL / Plain Text",
+    payloadModeGs1: "GS1 Digital Link 2027",
+    payloadModeZatca: "Saudi ZATCA E-Invoice",
+    payloadModeEpc: "SEPA Bank Transfer (EPC)",
+    payloadModeWifi: "WiFi Network",
+    payloadModeVcard: "Contact Card (vCard)",
+    autoFixCheckDigit: "Auto-Fix Check Digit"
   },
   ar: {
     title: "أومني كود ستوديو",
@@ -139,6 +155,14 @@ export const translations: Record<"en" | "ar", Translations> = {
     barcodeStyleThermal: "ملصق بوليصة شحن حرارية للمستودعات",
     barcodeStylePriceTag: "بطاقة سعر وتجزئة للمتاجر (Shelf Tag)",
     headerLabel: "نص الترويسة / العنوان العلوي",
-    footerLabel: "نص التذييل / الملاحظة السفلية"
+    footerLabel: "نص التذييل / الملاحظة السفلية",
+    enterpriseStandards: "معايير الترميز والفوترة المعتمدة",
+    payloadModeText: "رابط أو نص حر",
+    payloadModeGs1: "معيار التجزئة GS1 Digital Link",
+    payloadModeZatca: "فاتورة الزكاة والضريبة (ZATCA)",
+    payloadModeEpc: "تحويل بنكي مباشر (EPC SEPA)",
+    payloadModeWifi: "شبكة واي فاي (WiFi)",
+    payloadModeVcard: "بطاقة اتصال (vCard)",
+    autoFixCheckDigit: "إصلاح Check Digit تلقائياً"
   }
 };
