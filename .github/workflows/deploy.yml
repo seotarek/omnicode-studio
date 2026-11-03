@@ -246,9 +246,9 @@ jobs:
 
       - name: Publish NPM Package to GitHub Packages
         run: |
-          cd packages/core
           npm ci
-          npm run build
+          npm run build --prefix packages/core
+          cd packages/core
           npm publish || echo "Package version may already be published"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -269,10 +269,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build Web Studio Dist
+      - name: Build Web Studio Dist & Core
         run: |
           npm ci
           npm run build
+          npm run build --prefix packages/core
 
       - name: Assemble Release Assets
         run: |
