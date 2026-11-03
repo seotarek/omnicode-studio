@@ -13,7 +13,9 @@ import { Header } from "./components/layout/Header";
 import { QRForm } from "./components/qr/QRForm";
 import { BarcodeForm } from "./components/barcode/BarcodeForm";
 import { SealForm } from "./components/seal/SealForm";
-import { BatchPanel } from "./components/batch/BatchPanel";
+import { BatchPanel, BatchKind, BatchAssetFormat } from "./components/batch/BatchPanel";
+import { parseBatchInput } from "./core/batch/parser";
+import { svgToCanvas } from "./core/export";
 import { PreviewPanel } from "./components/preview/PreviewPanel";
 import { ScannerPanel } from "./components/scanner/ScannerPanel";
 
@@ -64,6 +66,9 @@ export function App() {
   // Batch State
   const [batchText, setBatchText] = useState("Item 1, https://site.com/1\nItem 2, https://site.com/2\nItem 3, https://site.com/3");
   const [batchStatus, setBatchStatus] = useState<string | null>(null);
+  const [batchKind, setBatchKind] = useState<BatchKind>("qr");
+  const [batchAssetFormat, setBatchAssetFormat] = useState<BatchAssetFormat>("svg");
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
 
   // QR Options computation
   const qrOptions: QRCodeOptions = useMemo(() => {
@@ -179,9 +184,85 @@ export function App() {
     }
   }, [sealType, sealData, sealTitle, sealSubtitle, sealSerial, sealDate, sealInkColor, sealBorderStyle, sealCenterIcon, isTransparent, bgColor]);
 
+  // Batch Items & Live First Item Preview
+  const parsedBatchItems = useMemo(() => {
+    return parseBatchInput(batchText);
+  }, [batchText]);
+
+  const firstBatchItem = parsedBatchItems[0];
+
+  const batchPreviewSvg = useMemo(() => {
+    if (!firstBatchItem) return "";
+    try {
+      if (batchKind === "barcode") {
+        return generateBarcodeSVG({
+          format: barcodeFormat,
+          data: firstBatchItem.data,
+          lineColor: barcodeColor,
+          lineColor2: barcodeColor2,
+          style: barcodeStyle,
+          headerText: barcodeHeader,
+          footerText: barcodeFooter,
+          background: isTransparent ? "transparent" : bgColor,
+          width: barcodeWidth,
+          height: barcodeHeight
+        });
+      }
+      if (batchKind === "seal") {
+        return generateSealSVG({
+          type: sealType,
+          data: firstBatchItem.data,
+          titleText: sealTitle,
+          subtitleText: sealSubtitle,
+          serialNumber: firstBatchItem.name,
+          dateText: sealDate,
+          inkColor: sealInkColor,
+          borderStyle: sealBorderStyle,
+          centerIcon: sealCenterIcon,
+          backgroundColor: isTransparent ? "transparent" : bgColor
+        });
+      }
+      const renderer = new QRCodeRenderer({
+        ...qrOptions,
+        data: firstBatchItem.data
+      });
+      return renderer.render().svgString;
+    } catch {
+      return "";
+    }
+  }, [
+    firstBatchItem,
+    batchKind,
+    barcodeFormat,
+    barcodeColor,
+    barcodeColor2,
+    barcodeStyle,
+    barcodeHeader,
+    barcodeFooter,
+    isTransparent,
+    bgColor,
+    barcodeWidth,
+    barcodeHeight,
+    sealType,
+    sealTitle,
+    sealSubtitle,
+    sealDate,
+    sealInkColor,
+    sealBorderStyle,
+    sealCenterIcon,
+    qrOptions
+  ]);
+
   // Copy handler
   const handleCopySvg = () => {
-    const activeSvg = activeTab === "qr" ? qrSvg : activeTab === "seal" ? sealSvg : barcodeSvg;
+    const activeSvg =
+      activeTab === "qr"
+        ? qrSvg
+        : activeTab === "seal"
+        ? sealSvg
+        : activeTab === "batch"
+        ? (batchPreviewSvg || qrSvg)
+        : barcodeSvg;
     navigator.clipboard.writeText(activeSvg);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -203,35 +284,90 @@ export function App() {
 
   // Batch Export Handler
   const handleBatchDownload = async () => {
-    setBatchStatus("Processing bundle...");
+    const items = parseBatchInput(batchText);
+    if (items.length === 0) {
+      setBatchStatus(lang === "ar" ? "يرجى إدخال بيانات صالحة للتوليد" : "No valid items to export");
+      return;
+    }
+
+    setIsBatchProcessing(true);
+    setBatchStatus(
+      lang === "ar"
+        ? `جاري معالجة وتوليد ${items.length} عنصر...`
+        : `Generating and bundling ${items.length} codes...`
+    );
+
     try {
       const zip = new JSZip();
-      const lines = batchText.split("\n").map((l) => l.trim()).filter(Boolean);
 
-      for (let i = 0; i < lines.length; i++) {
-        const parts = lines[i].split(",");
-        const name = (parts[0] || `code_${i + 1}`).trim();
-        const data = (parts[1] || parts[0]).trim();
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        let svg = "";
 
-        const itemOpts: QRCodeOptions = {
-          ...qrOptions,
-          data
-        };
-        const renderer = new QRCodeRenderer(itemOpts);
-        const svg = renderer.render().svgString;
-        zip.file(`${name}.svg`, svg);
+        if (batchKind === "barcode") {
+          svg = generateBarcodeSVG({
+            format: barcodeFormat,
+            data: item.data,
+            lineColor: barcodeColor,
+            lineColor2: barcodeColor2,
+            style: barcodeStyle,
+            headerText: barcodeHeader,
+            footerText: barcodeFooter,
+            background: isTransparent ? "transparent" : bgColor,
+            width: barcodeWidth,
+            height: barcodeHeight
+          });
+        } else if (batchKind === "seal") {
+          svg = generateSealSVG({
+            type: sealType,
+            data: item.data,
+            titleText: sealTitle,
+            subtitleText: sealSubtitle,
+            serialNumber: item.name,
+            dateText: sealDate,
+            inkColor: sealInkColor,
+            borderStyle: sealBorderStyle,
+            centerIcon: sealCenterIcon,
+            backgroundColor: isTransparent ? "transparent" : bgColor
+          });
+        } else {
+          const renderer = new QRCodeRenderer({
+            ...qrOptions,
+            data: item.data
+          });
+          svg = renderer.render().svgString;
+        }
+
+        if (batchAssetFormat === "png") {
+          const canvas = await svgToCanvas(svg, 1200, 1200, isTransparent);
+          const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((b) => {
+              if (b) resolve(b);
+              else reject(new Error("Canvas conversion error"));
+            }, "image/png");
+          });
+          zip.file(`${item.name}.png`, blob);
+        } else {
+          zip.file(`${item.name}.svg`, svg);
+        }
       }
 
       const content = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(content);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "omnicode-batch-bundle.zip";
+      a.download = `omnicode-batch-${batchKind}-${items.length}.zip`;
       a.click();
       URL.revokeObjectURL(url);
-      setBatchStatus(`Downloaded ${lines.length} codes in ZIP!`);
+      setBatchStatus(
+        lang === "ar"
+          ? `تم تحميل ${items.length} كود بنجاح في ملف ZIP!`
+          : `Downloaded ${items.length} codes in ZIP!`
+      );
     } catch (e: any) {
       setBatchStatus(`Error: ${e.message}`);
+    } finally {
+      setIsBatchProcessing(false);
     }
   };
 
@@ -393,8 +529,14 @@ export function App() {
               batchText={batchText}
               setBatchText={setBatchText}
               batchStatus={batchStatus}
+              batchKind={batchKind}
+              setBatchKind={setBatchKind}
+              batchAssetFormat={batchAssetFormat}
+              setBatchAssetFormat={setBatchAssetFormat}
               onBatchDownload={handleBatchDownload}
+              isProcessing={isBatchProcessing}
               t={t}
+              lang={lang}
             />
           )}
 
@@ -421,6 +563,10 @@ export function App() {
             qrSvg={qrSvg}
             barcodeSvg={barcodeSvg}
             sealSvg={sealSvg}
+            batchPreviewSvg={batchPreviewSvg}
+            batchFirstItemName={firstBatchItem?.name}
+            batchTotalCount={parsedBatchItems.length}
+            onBatchDownload={handleBatchDownload}
             barcodeFormat={barcodeFormat}
             isBarcodeValid={barcodeValidation.isValid}
             isTransparent={isTransparent}

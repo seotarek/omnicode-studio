@@ -31,6 +31,12 @@ export interface Translations {
   batchCsvTitle: string;
   batchUploadBtn: string;
   batchDownloadZip: string;
+  batchModeLabel: string;
+  batchOutputFormat: string;
+  batchDetectedCount: string;
+  batchPreviewFirst: string;
+  batchSampleBtn: string;
+  batchEmptyWarning: string;
   historyTitle: string;
   clearHistory: string;
   barcodeStyle: string;
@@ -113,8 +119,14 @@ export const translations: Record<"en" | "ar", Translations> = {
     barcodeFormat: "Barcode Symbology Standard",
     barcodeData: "Barcode Numeric/Alpha Value",
     batchCsvTitle: "Batch Generation from CSV / Plain Text",
-    batchUploadBtn: "Select CSV File",
+    batchUploadBtn: "Select CSV or Text File",
     batchDownloadZip: "Export All as ZIP Bundle",
+    batchModeLabel: "Target Symbology / Format",
+    batchOutputFormat: "ZIP Assets Format",
+    batchDetectedCount: "Items Detected",
+    batchPreviewFirst: "Previewing First Item in Batch",
+    batchSampleBtn: "Load Sample Data",
+    batchEmptyWarning: "Please enter valid CSV or plain text entries.",
     historyTitle: "Recent Generations (Local)",
     clearHistory: "Clear History",
     barcodeStyle: "Barcode Visual Presentation Style",
@@ -194,9 +206,15 @@ export const translations: Record<"en" | "ar", Translations> = {
     removeLogo: "إزالة الشعار",
     barcodeFormat: "معيار الباركود (Symbology)",
     barcodeData: "قيمة الباركود",
-    batchCsvTitle: "التوليد الجماعي من ملف CSV",
-    batchUploadBtn: "اختيار ملف CSV",
+    batchCsvTitle: "التوليد الجماعي من ملف CSV أو نص",
+    batchUploadBtn: "اختيار ملف CSV أو TXT",
     batchDownloadZip: "تحميل كافة الأكواد في ملف ZIP",
+    batchModeLabel: "نوع الكود المستهدف للتوليد",
+    batchOutputFormat: "صيغة الملفات داخل الحزمة (ZIP)",
+    batchDetectedCount: "عنصر تم التعرف عليه",
+    batchPreviewFirst: "معاينة العنصر الأول من القائمة",
+    batchSampleBtn: "تحميل بيانات تجريبية",
+    batchEmptyWarning: "يرجى كتابة أو رفع بيانات صالحة للتوليد.",
     historyTitle: "السجل المحلي الأخير",
     clearHistory: "مسح السجل",
     barcodeStyle: "شكل ونمط تصميم الباركود",
