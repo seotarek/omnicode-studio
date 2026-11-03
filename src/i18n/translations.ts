@@ -60,6 +60,25 @@ export interface Translations {
   openInQrStudio: string;
   openInBarcodeStudio: string;
   copyDecodedText: string;
+  tabSeal: string;
+  sealType: string;
+  sealTypeRadial: string;
+  sealTypeBullseye: string;
+  sealTypeOfficial: string;
+  sealTypeNotary: string;
+  borderStyleLabel: string;
+  borderStyleScalloped: string;
+  borderStyleDoubleRing: string;
+  borderStyleCogwheel: string;
+  borderStyleGuilloche: string;
+  borderStyleSolid: string;
+  titleTextLabel: string;
+  subtitleTextLabel: string;
+  serialNumberLabel: string;
+  dateLabel: string;
+  centerIconLabel: string;
+  inkColorLabel: string;
+  sealPresetsTitle: string;
 }
 
 export const translations: Record<"en" | "ar", Translations> = {
@@ -124,7 +143,26 @@ export const translations: Record<"en" | "ar", Translations> = {
     decodedResult: "Decoded Payload & Standards Analysis",
     openInQrStudio: "Open in QR Studio",
     openInBarcodeStudio: "Open in Barcode Studio",
-    copyDecodedText: "Copy Decoded Payload"
+    copyDecodedText: "Copy Decoded Payload",
+    tabSeal: "Circular Seals & Barcodes",
+    sealType: "Seal & Circular Barcode Geometry",
+    sealTypeRadial: "Radial Spoke Barcode (360° Sunburst)",
+    sealTypeBullseye: "Concentric Ring Barcode (Bullseye)",
+    sealTypeOfficial: "Official Document Verification Seal",
+    sealTypeNotary: "Security Notarization Stamp",
+    borderStyleLabel: "Outer Perimeter Border Style",
+    borderStyleScalloped: "Embossed Scalloped Rosette",
+    borderStyleDoubleRing: "Royal Double-Ring Border",
+    borderStyleCogwheel: "Geometric Notched Cogwheel",
+    borderStyleGuilloche: "Guilloche Security Lattice",
+    borderStyleSolid: "Classic Solid Ring",
+    titleTextLabel: "Upper Perimeter Curved Text",
+    subtitleTextLabel: "Lower Perimeter Curved Text",
+    serialNumberLabel: "Verification / Document Serial No.",
+    dateLabel: "Certification Date / Timestamp",
+    centerIconLabel: "Center Security Emblem",
+    inkColorLabel: "Traditional Seal Ink Palette",
+    sealPresetsTitle: "Official Notary & Seal Presets"
   },
   ar: {
     title: "أومني كود ستوديو",
@@ -187,6 +225,25 @@ export const translations: Record<"en" | "ar", Translations> = {
     decodedResult: "نتيجة الكود وتحليل المعايير الفنية",
     openInQrStudio: "فتح في محرر QR",
     openInBarcodeStudio: "فتح في محرر الباركود",
-    copyDecodedText: "نسخ النص المفحوص"
+    copyDecodedText: "نسخ النص المفحوص",
+    tabSeal: "أختام التوثيق والباركود الدائري",
+    sealType: "شكل الختم والباركود الدائري",
+    sealTypeRadial: "باركود الأشعة الدائري (360° Sunburst)",
+    sealTypeBullseye: "باركود الحلقات الدائرية (Bullseye)",
+    sealTypeOfficial: "ختم الاعتماد والتوثيق الرسمي",
+    sealTypeNotary: "ختم توثيق المستندات المعتمدة",
+    borderStyleLabel: "شكل الإطار الخارجي للختم",
+    borderStyleScalloped: "حواف مسننة كلاسيكية (Scalloped Rosette)",
+    borderStyleDoubleRing: "إطار ملكي دائري مزدوج",
+    borderStyleCogwheel: "إطار مسنن هندسي (Cogwheel)",
+    borderStyleGuilloche: "شبكة أمان هندسية (Guilloche)",
+    borderStyleSolid: "إطار دائري مصمت كلاسيكي",
+    titleTextLabel: "النص الدائري العلوي (مسار مقوس)",
+    subtitleTextLabel: "النص الدائري السفلي (مسار مقوس)",
+    serialNumberLabel: "رقم التحقق أو القيد التسلسلي",
+    dateLabel: "تاريخ الاعتماد / الصلاحية",
+    centerIconLabel: "رمز الأمان والتوثيق المركزي",
+    inkColorLabel: "لون حبر الختم المعتمد",
+    sealPresetsTitle: "نماذج الأختام والتوثيق المعتمدة"
   }
 };

@@ -16,17 +16,22 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="border-b border-slate-200/90 bg-white/90 backdrop-blur-md sticky top-0 z-40 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 font-black text-xl select-none">
-            Ω
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 select-none p-2">
+            <svg viewBox="0 0 28 28" fill="none" className="w-full h-full text-white" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="24" height="24" rx="6" stroke="currentColor" strokeWidth="2" strokeDasharray="3 2" opacity="0.6"/>
+              <circle cx="14" cy="14" r="8" stroke="currentColor" strokeWidth="2"/>
+              <line x1="9" y1="10" x2="9" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="12" y1="8" x2="12" y2="20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="15" y1="11" x2="15" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="18" y1="9" x2="18" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="14" cy="14" r="2" fill="currentColor"/>
+            </svg>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-slate-900 text-lg leading-tight tracking-tight">
                 OmniCode Studio
               </h1>
-              <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-mono">
-                v1.0.0
-              </span>
             </div>
             <p className="text-xs text-slate-500 hidden sm:block font-normal mt-0.5">
               {subtitle}

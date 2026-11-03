@@ -7,9 +7,10 @@ import { ScannabilityBadge } from "./ScannabilityBadge";
 import { Translations } from "../../i18n/translations";
 
 interface PreviewPanelProps {
-  activeTab: "qr" | "barcode" | "batch" | "scanner";
+  activeTab: "qr" | "barcode" | "seal" | "batch" | "scanner";
   qrSvg: string;
   barcodeSvg: string;
+  sealSvg?: string;
   barcodeFormat: string;
   isBarcodeValid: boolean;
   isTransparent: boolean;
@@ -23,6 +24,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   activeTab,
   qrSvg,
   barcodeSvg,
+  sealSvg,
   barcodeFormat,
   isBarcodeValid,
   isTransparent,
@@ -39,7 +41,16 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
     return DOMPurify.sanitize(barcodeSvg, { USE_PROFILES: { svg: true, svgFilters: true } });
   }, [barcodeSvg]);
 
-  const targetSvg = activeTab === "barcode" ? barcodeSvg : qrSvg;
+  const sanitizedSealSvg = useMemo(() => {
+    return DOMPurify.sanitize(sealSvg || "", { USE_PROFILES: { svg: true, svgFilters: true } });
+  }, [sealSvg]);
+
+  const targetSvg =
+    activeTab === "barcode"
+      ? barcodeSvg
+      : activeTab === "seal"
+      ? (sealSvg || "")
+      : qrSvg;
 
   return (
     <div className="p-6 rounded-2xl border border-slate-200/90 bg-white shadow-xl shadow-slate-200/50 flex flex-col items-center sticky top-24">
@@ -53,6 +64,12 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
           <div
             dangerouslySetInnerHTML={{ __html: sanitizedQrSvg }}
             className="w-64 h-64 flex items-center justify-center"
+          />
+        )}
+        {activeTab === "seal" && (
+          <div
+            dangerouslySetInnerHTML={{ __html: sanitizedSealSvg }}
+            className="w-72 h-72 flex items-center justify-center p-2"
           />
         )}
         {activeTab === "barcode" &&

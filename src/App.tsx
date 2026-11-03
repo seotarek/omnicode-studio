@@ -1,22 +1,25 @@
 import React, { useState, useMemo } from "react";
-import { QrCode, Barcode, FileSpreadsheet, ScanLine } from "lucide-react";
+import { QrCode, Barcode, Award, FileSpreadsheet, ScanLine } from "lucide-react";
 import { QRCodeOptions, DotType, CornerSquareType, CornerDotType, ErrorCorrectionLevel } from "./core/qr/types";
 import { QRCodeRenderer } from "./core/qr/renderer";
 import { validateScannability } from "./core/validator/scannability";
 import { BarcodeFormat, BarcodeStyle, validateBarcodeData, generateBarcodeSVG } from "./core/barcode/generator";
+import { SealType, BorderStyle } from "./core/seal/types";
+import { generateSealSVG } from "./core/seal/generator";
 import { translations } from "./i18n/translations";
 import JSZip from "jszip";
 
 import { Header } from "./components/layout/Header";
 import { QRForm } from "./components/qr/QRForm";
 import { BarcodeForm } from "./components/barcode/BarcodeForm";
+import { SealForm } from "./components/seal/SealForm";
 import { BatchPanel } from "./components/batch/BatchPanel";
 import { PreviewPanel } from "./components/preview/PreviewPanel";
 import { ScannerPanel } from "./components/scanner/ScannerPanel";
 
 export function App() {
   const [lang, setLang] = useState<"en" | "ar">("ar");
-  const [activeTab, setActiveTab] = useState<"qr" | "barcode" | "batch" | "scanner">("qr");
+  const [activeTab, setActiveTab] = useState<"qr" | "barcode" | "seal" | "batch" | "scanner">("qr");
 
   // Translation helper
   const t = translations[lang];
@@ -46,6 +49,17 @@ export function App() {
   const [barcodeFooter, setBarcodeFooter] = useState("");
   const [barcodeWidth, setBarcodeWidth] = useState(2);
   const [barcodeHeight, setBarcodeHeight] = useState(90);
+
+  // Seal State
+  const [sealType, setSealType] = useState<SealType>("official-seal");
+  const [sealTitle, setSealTitle] = useState("OFFICIAL VERIFICATION SEAL");
+  const [sealSubtitle, setSealSubtitle] = useState("AUTHENTICATED & SECURE");
+  const [sealSerial, setSealSerial] = useState("CERT-2026-X99");
+  const [sealDate, setSealDate] = useState("2026-11-03");
+  const [sealData, setSealData] = useState("https://omnicode.studio/verify");
+  const [sealInkColor, setSealInkColor] = useState("#1e3a8a");
+  const [sealBorderStyle, setSealBorderStyle] = useState<BorderStyle>("scalloped");
+  const [sealCenterIcon, setSealCenterIcon] = useState<"shield" | "star" | "lock" | "check">("shield");
 
   // Batch State
   const [batchText, setBatchText] = useState("Item 1, https://site.com/1\nItem 2, https://site.com/2\nItem 3, https://site.com/3");
@@ -145,9 +159,29 @@ export function App() {
     }
   }, [barcodeFormat, barcodeData, barcodeColor, barcodeColor2, barcodeStyle, barcodeHeader, barcodeFooter, isTransparent, bgColor, barcodeWidth, barcodeHeight, barcodeValidation]);
 
+  // Seal SVG computation
+  const sealSvg = useMemo(() => {
+    try {
+      return generateSealSVG({
+        type: sealType,
+        data: sealData,
+        titleText: sealTitle,
+        subtitleText: sealSubtitle,
+        serialNumber: sealSerial,
+        dateText: sealDate,
+        inkColor: sealInkColor,
+        borderStyle: sealBorderStyle,
+        centerIcon: sealCenterIcon,
+        backgroundColor: isTransparent ? "transparent" : bgColor
+      });
+    } catch {
+      return "";
+    }
+  }, [sealType, sealData, sealTitle, sealSubtitle, sealSerial, sealDate, sealInkColor, sealBorderStyle, sealCenterIcon, isTransparent, bgColor]);
+
   // Copy handler
   const handleCopySvg = () => {
-    const activeSvg = activeTab === "qr" ? qrSvg : barcodeSvg;
+    const activeSvg = activeTab === "qr" ? qrSvg : activeTab === "seal" ? sealSvg : barcodeSvg;
     navigator.clipboard.writeText(activeSvg);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -238,6 +272,17 @@ export function App() {
             {t.tabBarcode}
           </button>
           <button
+            onClick={() => setActiveTab("seal")}
+            className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all ${
+              activeTab === "seal"
+                ? "bg-white text-emerald-800 shadow-sm border border-slate-200/60 font-bold"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+            }`}
+          >
+            <Award className="w-4 h-4 text-emerald-600" />
+            {t.tabSeal}
+          </button>
+          <button
             onClick={() => setActiveTab("batch")}
             className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all ${
               activeTab === "batch"
@@ -318,6 +363,31 @@ export function App() {
             />
           )}
 
+          {activeTab === "seal" && (
+            <SealForm
+              sealType={sealType}
+              setSealType={setSealType}
+              titleText={sealTitle}
+              setTitleText={setSealTitle}
+              subtitleText={sealSubtitle}
+              setSubtitleText={setSealSubtitle}
+              serialNumber={sealSerial}
+              setSerialNumber={setSealSerial}
+              dateText={sealDate}
+              setDateText={setSealDate}
+              data={sealData}
+              setData={setSealData}
+              inkColor={sealInkColor}
+              setInkColor={setSealInkColor}
+              borderStyle={sealBorderStyle}
+              setBorderStyle={setSealBorderStyle}
+              centerIcon={sealCenterIcon}
+              setCenterIcon={setSealCenterIcon}
+              lang={lang}
+              t={t}
+            />
+          )}
+
           {activeTab === "batch" && (
             <BatchPanel
               batchText={batchText}
@@ -350,6 +420,7 @@ export function App() {
             activeTab={activeTab}
             qrSvg={qrSvg}
             barcodeSvg={barcodeSvg}
+            sealSvg={sealSvg}
             barcodeFormat={barcodeFormat}
             isBarcodeValid={barcodeValidation.isValid}
             isTransparent={isTransparent}
