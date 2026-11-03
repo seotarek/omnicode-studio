@@ -190,4 +190,193 @@ class PayloadBuilder
 
         return $tags;
     }
+
+    /**
+     * Decodes GS1 Digital Link standard URI back into an associative array.
+     */
+    public static function decodeGs1DigitalLink(string $uri): array
+    {
+        $parts = parse_url($uri);
+        if ($parts === false || empty($parts['path'])) {
+            throw new \InvalidArgumentException('Invalid GS1 Digital Link URI');
+        }
+
+        $scheme = $parts['scheme'] ?? 'https';
+        $host = $parts['host'] ?? '';
+        $domain = "{$scheme}://{$host}";
+
+        $segments = array_values(array_filter(explode('/', $parts['path'])));
+        $result = [
+            'domain' => $domain,
+            'gtin' => '',
+            'lot' => null,
+            'serial' => null,
+            'cpv' => null,
+            'expiryDate' => null,
+            'attributes' => []
+        ];
+
+        $count = count($segments);
+        for ($i = 0; $i < $count; $i += 2) {
+            $ai = $segments[$i];
+            $val = rawurldecode($segments[$i + 1] ?? '');
+            if ($ai === '01') {
+                $result['gtin'] = $val;
+            } elseif ($ai === '10') {
+                $result['lot'] = $val;
+            } elseif ($ai === '21') {
+                $result['serial'] = $val;
+            } elseif ($ai === '22') {
+                $result['cpv'] = $val;
+            }
+        }
+
+        if (!empty($parts['query'])) {
+            parse_str($parts['query'], $query);
+            if (isset($query['17'])) {
+                $result['expiryDate'] = (string)$query['17'];
+                unset($query['17']);
+            }
+            if (!empty($query)) {
+                $result['attributes'] = $query;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Decodes European Payments Council SEPA QR Code into an associative array.
+     */
+    public static function decodeEpcSepa(string $payload): array
+    {
+        $lines = preg_split('/\r\n|\r|\n/', $payload);
+        if ($lines === false || count($lines) < 7 || $lines[0] !== 'BCD') {
+            throw new \InvalidArgumentException('Invalid EPC SEPA payload');
+        }
+
+        $amount = null;
+        $currency = 'EUR';
+        if (isset($lines[7]) && str_starts_with($lines[7], 'EUR')) {
+            $amount = (float)substr($lines[7], 3);
+        }
+
+        return [
+            'serviceTag' => $lines[0],
+            'version' => $lines[1] ?? '002',
+            'characterSet' => $lines[2] ?? '1',
+            'identification' => $lines[3] ?? 'SCT',
+            'bic' => !empty($lines[4]) ? $lines[4] : null,
+            'beneficiaryName' => $lines[5] ?? '',
+            'iban' => $lines[6] ?? '',
+            'amount' => $amount,
+            'currency' => $currency,
+            'purpose' => !empty($lines[8]) ? $lines[8] : null,
+            'remittanceReference' => !empty($lines[9]) ? $lines[9] : null,
+            'remittanceInformation' => !empty($lines[10]) ? $lines[10] : null,
+        ];
+    }
+
+    /**
+     * Decodes WiFi QR string into an associative array.
+     */
+    public static function decodeWifi(string $payload): array
+    {
+        if (!str_starts_with($payload, 'WIFI:')) {
+            throw new \InvalidArgumentException('Invalid WiFi QR string');
+        }
+
+        $content = preg_replace('/;;$/', '', substr($payload, 5));
+        $fields = [];
+        $currentKey = '';
+        $currentValue = '';
+        $isEscaped = false;
+        $inKey = true;
+        $len = strlen($content);
+
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $content[$i];
+            if ($isEscaped) {
+                $currentValue .= $ch;
+                $isEscaped = false;
+                continue;
+            }
+
+            if ($ch === '\\') {
+                $isEscaped = true;
+                continue;
+            }
+
+            if ($inKey) {
+                if ($ch === ':') {
+                    $inKey = false;
+                } else {
+                    $currentKey .= $ch;
+                }
+            } else {
+                if ($ch === ';') {
+                    if ($currentKey !== '') {
+                        $fields[$currentKey] = $currentValue;
+                    }
+                    $currentKey = '';
+                    $currentValue = '';
+                    $inKey = true;
+                } else {
+                    $currentValue .= $ch;
+                }
+            }
+        }
+
+        if ($currentKey !== '' && $currentValue !== '') {
+            $fields[$currentKey] = $currentValue;
+        }
+
+        return [
+            'ssid' => $fields['S'] ?? '',
+            'password' => $fields['P'] ?? '',
+            'encryption' => $fields['T'] ?? 'WPA',
+            'hidden' => strtolower($fields['H'] ?? '') === 'true'
+        ];
+    }
+
+    /**
+     * Decodes vCard payload into an associative array.
+     */
+    public static function decodeVCard(string $payload): array
+    {
+        $lines = preg_split('/\r\n|\r|\n/', $payload);
+        $result = [
+            'firstName' => '',
+            'lastName' => '',
+            'organization' => null,
+            'title' => null,
+            'phone' => null,
+            'email' => null,
+            'url' => null,
+            'address' => null,
+        ];
+
+        foreach ($lines as $line) {
+            if (str_starts_with($line, 'N:')) {
+                $parts = explode(';', substr($line, 2));
+                $result['lastName'] = $parts[0] ?? '';
+                $result['firstName'] = $parts[1] ?? '';
+            } elseif (str_starts_with($line, 'ORG:')) {
+                $result['organization'] = substr($line, 4);
+            } elseif (str_starts_with($line, 'TITLE:')) {
+                $result['title'] = substr($line, 6);
+            } elseif (str_starts_with($line, 'TEL') && str_contains($line, ':')) {
+                $result['phone'] = substr($line, strpos($line, ':') + 1);
+            } elseif (str_starts_with($line, 'EMAIL') && str_contains($line, ':')) {
+                $result['email'] = substr($line, strpos($line, ':') + 1);
+            } elseif (str_starts_with($line, 'URL:')) {
+                $result['url'] = substr($line, 4);
+            } elseif (str_starts_with($line, 'ADR') && str_contains($line, ':')) {
+                $parts = explode(';', substr($line, strpos($line, ':') + 1));
+                $result['address'] = implode(', ', array_filter($parts));
+            }
+        }
+
+        return $result;
+    }
 }

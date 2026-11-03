@@ -472,6 +472,39 @@ describe("OmniCode REST API Integration Suite", () => {
       expect(decodeRes.body.decoded.sellerName).toBe("شركة أومني كود المحدودة");
       expect(decodeRes.body.decoded.vatNumber).toBe("300000000000003");
       expect(decodeRes.body.decoded.totalWithVat).toBe("115.00");
+
+      // 5. Decode GS1 Digital Link
+      const decodeGs1Res = await request(app)
+        .post("/api/v1/payloads/decode")
+        .send({
+          type: "gs1",
+          data: gs1Res.body.encoded
+        });
+      expect(decodeGs1Res.status).toBe(200);
+      expect(decodeGs1Res.body.decoded.gtin).toBe("01234567890128");
+      expect(decodeGs1Res.body.decoded.lot).toBe("BATCH-A1");
+
+      // 6. Decode EPC SEPA
+      const decodeEpcRes = await request(app)
+        .post("/api/v1/payloads/decode")
+        .send({
+          type: "epc",
+          data: epcRes.body.encoded
+        });
+      expect(decodeEpcRes.status).toBe(200);
+      expect(decodeEpcRes.body.decoded.beneficiaryName).toBe("OmniCode GmbH");
+      expect(decodeEpcRes.body.decoded.amount).toBe(49.99);
+
+      // 7. Decode WiFi
+      const decodeWifiRes = await request(app)
+        .post("/api/v1/payloads/decode")
+        .send({
+          type: "wifi",
+          data: "WIFI:T:WPA;S:MyOffice;P:SecretKey123;;;"
+        });
+      expect(decodeWifiRes.status).toBe(200);
+      expect(decodeWifiRes.body.decoded.ssid).toBe("MyOffice");
+      expect(decodeWifiRes.body.decoded.password).toBe("SecretKey123");
     });
   });
 });

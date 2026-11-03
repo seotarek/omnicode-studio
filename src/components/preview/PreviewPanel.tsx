@@ -7,7 +7,7 @@ import { ScannabilityBadge } from "./ScannabilityBadge";
 import { Translations } from "../../i18n/translations";
 
 interface PreviewPanelProps {
-  activeTab: "qr" | "barcode" | "batch";
+  activeTab: "qr" | "barcode" | "batch" | "scanner";
   qrSvg: string;
   barcodeSvg: string;
   barcodeFormat: string;
@@ -39,7 +39,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
     return DOMPurify.sanitize(barcodeSvg, { USE_PROFILES: { svg: true, svgFilters: true } });
   }, [barcodeSvg]);
 
-  const targetSvg = activeTab === "qr" ? qrSvg : barcodeSvg;
+  const targetSvg = activeTab === "barcode" ? barcodeSvg : qrSvg;
 
   return (
     <div className="p-6 rounded-2xl border border-slate-200/90 bg-white shadow-xl shadow-slate-200/50 flex flex-col items-center sticky top-24">

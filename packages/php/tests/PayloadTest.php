@@ -89,4 +89,53 @@ class PayloadTest extends TestCase
         $this->assertSame('150.00', $decoded[5]);
         $this->assertSame($xmlHash, $decoded[6]);
     }
+
+    public function testGs1DigitalLinkDecoderParsesAiSegments(): void
+    {
+        $uri = 'https://id.gs1.org/01/06291041500213/10/BATCH-99/21/SER-01?17=261231';
+        $decoded = PayloadBuilder::decodeGs1DigitalLink($uri);
+
+        $this->assertSame('https://id.gs1.org', $decoded['domain']);
+        $this->assertSame('06291041500213', $decoded['gtin']);
+        $this->assertSame('BATCH-99', $decoded['lot']);
+        $this->assertSame('SER-01', $decoded['serial']);
+        $this->assertSame('261231', $decoded['expiryDate']);
+    }
+
+    public function testEpcSepaDecoderParsesStructuredFields(): void
+    {
+        $payload = "BCD\n002\n1\nSCT\nBPOTBEB1\nRed Cross Belgium\nBE72000000001616\nEUR25.50\nCHAR\n\nRelief Donation";
+        $decoded = PayloadBuilder::decodeEpcSepa($payload);
+
+        $this->assertSame('Red Cross Belgium', $decoded['beneficiaryName']);
+        $this->assertSame('BE72000000001616', $decoded['iban']);
+        $this->assertSame('BPOTBEB1', $decoded['bic']);
+        $this->assertSame(25.50, $decoded['amount']);
+        $this->assertSame('EUR', $decoded['currency']);
+        $this->assertSame('CHAR', $decoded['purpose']);
+        $this->assertSame('Relief Donation', $decoded['remittanceInformation']);
+    }
+
+    public function testWifiDecoderParsesEscapedCredentials(): void
+    {
+        $payload = 'WIFI:T:WPA;S:Enterprise\;WiFi;P:Secr\\;et2026!;H:true;;';
+        $decoded = PayloadBuilder::decodeWifi($payload);
+
+        $this->assertSame('Enterprise;WiFi', $decoded['ssid']);
+        $this->assertSame('Secr;et2026!', $decoded['password']);
+        $this->assertSame('WPA', $decoded['encryption']);
+        $this->assertTrue($decoded['hidden']);
+    }
+
+    public function testVCardDecoderParsesContactDetails(): void
+    {
+        $payload = "BEGIN:VCARD\nVERSION:3.0\nN:Mohamed;Tarek;;;\nFN:Tarek Mohamed\nORG:OmniCode\nTEL;TYPE=CELL:+966500000000\nEMAIL:t@omnicode.studio\nEND:VCARD";
+        $decoded = PayloadBuilder::decodeVCard($payload);
+
+        $this->assertSame('Tarek', $decoded['firstName']);
+        $this->assertSame('Mohamed', $decoded['lastName']);
+        $this->assertSame('OmniCode', $decoded['organization']);
+        $this->assertSame('+966500000000', $decoded['phone']);
+        $this->assertSame('t@omnicode.studio', $decoded['email']);
+    }
 }

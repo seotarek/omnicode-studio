@@ -70,7 +70,9 @@ export interface EpcSepaPayload {
   iban: string;
   bic?: string;
   amount?: number;
+  currency?: string;
   purpose?: string;
+  purposeCode?: string;
   remittanceReference?: string;
   remittanceInformation?: string;
   beneficiaryOriginatorInfo?: string;

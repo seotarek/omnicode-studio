@@ -18,6 +18,10 @@ import {
   encodeEpcSepa,
   encodeZatcaInvoice,
   decodeZatcaInvoice,
+  decodeGs1DigitalLink,
+  decodeEpcSepa,
+  decodeWifi,
+  decodeVCard,
   encodeWifi,
   encodeVCard,
   encodeWhatsApp,
@@ -614,7 +618,7 @@ app.post("/api/v1/payloads/encode", (req, res) => {
   }
 });
 
-// ZATCA TLV Invoice Decoding Endpoint
+// Enterprise Payload Decoding Endpoint (GS1, ZATCA, EPC SEPA, WiFi, vCard)
 app.post("/api/v1/payloads/decode", (req, res) => {
   try {
     const { type, data } = req.body;
@@ -625,18 +629,30 @@ app.post("/api/v1/payloads/decode", (req, res) => {
       });
     }
 
-    if (type.toLowerCase() === "zatca") {
-      const decoded = decodeZatcaInvoice(data);
-      return res.json({
-        success: true,
-        type: "zatca",
-        decoded
+    const normType = type.toLowerCase();
+    let decoded;
+
+    if (normType === "zatca") {
+      decoded = decodeZatcaInvoice(data);
+    } else if (normType === "gs1") {
+      decoded = decodeGs1DigitalLink(data);
+    } else if (normType === "epc" || normType === "sepa") {
+      decoded = decodeEpcSepa(data);
+    } else if (normType === "wifi") {
+      decoded = decodeWifi(data);
+    } else if (normType === "vcard") {
+      decoded = decodeVCard(data);
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: `Unsupported decode type '${type}'. Supported: zatca, gs1, epc, wifi, vcard`
       });
     }
 
-    return res.status(400).json({
-      success: false,
-      error: `Unsupported decode type '${type}'. Supported: zatca`
+    return res.json({
+      success: true,
+      type: normType,
+      decoded
     });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

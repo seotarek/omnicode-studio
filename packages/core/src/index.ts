@@ -23,7 +23,7 @@ export {
   type BarcodeValidationResult
 } from "./barcode/generator.js";
 
-// Payloads & Encoders
+// Payloads & Encoders / Decoders
 export {
   encodeWifi,
   encodeVCard,
@@ -35,6 +35,12 @@ export {
   encodeZatcaInvoice,
   decodeZatcaInvoice
 } from "./payloads/encoders.js";
+export {
+  decodeGs1DigitalLink,
+  decodeEpcSepa,
+  decodeWifi,
+  decodeVCard
+} from "./payloads/decoders.js";
 export type {
   WifiPayload,
   VCardPayload,

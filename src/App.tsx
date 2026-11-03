@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { QrCode, Barcode, FileSpreadsheet } from "lucide-react";
+import { QrCode, Barcode, FileSpreadsheet, ScanLine } from "lucide-react";
 import { QRCodeOptions, DotType, CornerSquareType, CornerDotType, ErrorCorrectionLevel } from "./core/qr/types";
 import { QRCodeRenderer } from "./core/qr/renderer";
 import { validateScannability } from "./core/validator/scannability";
@@ -12,10 +12,11 @@ import { QRForm } from "./components/qr/QRForm";
 import { BarcodeForm } from "./components/barcode/BarcodeForm";
 import { BatchPanel } from "./components/batch/BatchPanel";
 import { PreviewPanel } from "./components/preview/PreviewPanel";
+import { ScannerPanel } from "./components/scanner/ScannerPanel";
 
 export function App() {
   const [lang, setLang] = useState<"en" | "ar">("ar");
-  const [activeTab, setActiveTab] = useState<"qr" | "barcode" | "batch">("qr");
+  const [activeTab, setActiveTab] = useState<"qr" | "barcode" | "batch" | "scanner">("qr");
 
   // Translation helper
   const t = translations[lang];
@@ -247,6 +248,17 @@ export function App() {
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             {t.tabBatch}
           </button>
+          <button
+            onClick={() => setActiveTab("scanner")}
+            className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all ${
+              activeTab === "scanner"
+                ? "bg-white text-emerald-800 shadow-sm border border-slate-200/60 font-bold"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+            }`}
+          >
+            <ScanLine className="w-4 h-4 text-emerald-600" />
+            {t.scannerTab}
+          </button>
         </div>
       </div>
 
@@ -313,6 +325,21 @@ export function App() {
               batchStatus={batchStatus}
               onBatchDownload={handleBatchDownload}
               t={t}
+            />
+          )}
+
+          {activeTab === "scanner" && (
+            <ScannerPanel
+              t={t}
+              lang={lang}
+              onLoadIntoQr={(text) => {
+                setQrText(text);
+                setActiveTab("qr");
+              }}
+              onLoadIntoBarcode={(data) => {
+                setBarcodeData(data);
+                setActiveTab("barcode");
+              }}
             />
           )}
         </div>

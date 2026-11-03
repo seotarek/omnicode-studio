@@ -52,6 +52,14 @@ export interface Translations {
   payloadModeWifi: string;
   payloadModeVcard: string;
   autoFixCheckDigit: string;
+  scannerTab: string;
+  scannerDropTitle: string;
+  scannerDropSubtitle: string;
+  scannerPasteHint: string;
+  decodedResult: string;
+  openInQrStudio: string;
+  openInBarcodeStudio: string;
+  copyDecodedText: string;
 }
 
 export const translations: Record<"en" | "ar", Translations> = {
@@ -108,7 +116,15 @@ export const translations: Record<"en" | "ar", Translations> = {
     payloadModeEpc: "SEPA Bank Transfer (EPC)",
     payloadModeWifi: "WiFi Network",
     payloadModeVcard: "Contact Card (vCard)",
-    autoFixCheckDigit: "Auto-Fix Check Digit"
+    autoFixCheckDigit: "Auto-Fix Check Digit",
+    scannerTab: "Optical Scanner & Verifier",
+    scannerDropTitle: "Drag & Drop Image or Click to Scan",
+    scannerDropSubtitle: "Instant decoding for QR Code, Data Matrix, Aztec, PDF417, EAN-13, Code 128 & UPC",
+    scannerPasteHint: "Or paste an image directly from clipboard (Ctrl+V)",
+    decodedResult: "Decoded Payload & Standards Analysis",
+    openInQrStudio: "Open in QR Studio",
+    openInBarcodeStudio: "Open in Barcode Studio",
+    copyDecodedText: "Copy Decoded Payload"
   },
   ar: {
     title: "أومني كود ستوديو",
@@ -163,6 +179,14 @@ export const translations: Record<"en" | "ar", Translations> = {
     payloadModeEpc: "تحويل بنكي مباشر (EPC SEPA)",
     payloadModeWifi: "شبكة واي فاي (WiFi)",
     payloadModeVcard: "بطاقة اتصال (vCard)",
-    autoFixCheckDigit: "إصلاح Check Digit تلقائياً"
+    autoFixCheckDigit: "إصلاح Check Digit تلقائياً",
+    scannerTab: "الماسح الضوئي وفاحص الأكواد",
+    scannerDropTitle: "اسحب وأفلت صورة أو انقر للمسح",
+    scannerDropSubtitle: "فحص فوري لأكواد QR، داتا ماتركس، Aztec، PDF417، EAN-13، Code 128 وUPC",
+    scannerPasteHint: "أو الصق صورة مباشرة من الحافظة (Ctrl+V)",
+    decodedResult: "نتيجة الكود وتحليل المعايير الفنية",
+    openInQrStudio: "فتح في محرر QR",
+    openInBarcodeStudio: "فتح في محرر الباركود",
+    copyDecodedText: "نسخ النص المفحوص"
   }
 };

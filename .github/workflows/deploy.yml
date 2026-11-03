@@ -229,7 +229,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/omnicode-api:latest
-            ghcr.io/${{ github.repository_owner }}/omnicode-api:v1.1.0
+            ghcr.io/${{ github.repository_owner }}/omnicode-api:v1.2.0
             ghcr.io/${{ github.repository_owner }}/omnicode-api:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/omnicode-studio-api:latest
 
@@ -275,38 +275,38 @@ jobs:
           mkdir -p release-assets
 
           # 1. Web Studio static build
-          cd dist && zip -r ../release-assets/omnicode-studio-web-v1.1.0.zip . && cd ..
+          cd dist && zip -r ../release-assets/omnicode-studio-web-v1.2.0.zip . && cd ..
 
           # 2. NPM package tarball
           cd packages/core
           npm pack
-          mv seotarek-omnicode-core-*.tgz ../../release-assets/omnicode-core-v1.1.0.tgz
+          mv seotarek-omnicode-core-*.tgz ../../release-assets/omnicode-core-v1.2.0.tgz
           cd ../..
 
           # 3. Pure PHP SDK zip
-          zip -r release-assets/omnicode-php-v1.1.0.zip packages/php -x "packages/php/vendor/*"
+          zip -r release-assets/omnicode-php-v1.2.0.zip packages/php -x "packages/php/vendor/*"
 
           # 4. Laravel package zip
-          zip -r release-assets/omnicode-laravel-v1.1.0.zip packages/laravel -x "packages/laravel/vendor/*"
+          zip -r release-assets/omnicode-laravel-v1.2.0.zip packages/laravel -x "packages/laravel/vendor/*"
 
           # 5. Checksums
           cd release-assets
-          sha256sum omnicode-studio-web-v1.1.0.zip omnicode-core-v1.1.0.tgz omnicode-php-v1.1.0.zip omnicode-laravel-v1.1.0.zip > checksums-v1.1.0.txt
+          sha256sum omnicode-studio-web-v1.2.0.zip omnicode-core-v1.2.0.tgz omnicode-php-v1.2.0.zip omnicode-laravel-v1.2.0.zip > checksums-v1.2.0.txt
           cd ..
 
-      - name: Publish or Update GitHub Release v1.1.0
+      - name: Publish or Update GitHub Release v1.2.0
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG_NAME="v1.1.0"
+          TAG_NAME="v1.2.0"
           if gh release view "$TAG_NAME" >/dev/null 2>&1; then
             echo "Updating existing release $TAG_NAME..."
-            gh release edit "$TAG_NAME" --title "OmniCode Studio v1.1.0 — Enterprise Barcode & QR Ecosystem" --notes-file RELEASE_NOTES.md
+            gh release edit "$TAG_NAME" --title "OmniCode Studio v1.2.0 — Enterprise Barcode & QR Ecosystem" --notes-file RELEASE_NOTES.md
             gh release upload "$TAG_NAME" release-assets/* --clobber
           else
             echo "Creating new release $TAG_NAME..."
             gh release create "$TAG_NAME" release-assets/* \
-              --title "OmniCode Studio v1.1.0 — Enterprise Barcode & QR Ecosystem" \
+              --title "OmniCode Studio v1.2.0 — Enterprise Barcode & QR Ecosystem" \
               --notes-file RELEASE_NOTES.md \
               --target main
           fi
